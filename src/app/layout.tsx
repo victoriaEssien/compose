@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
@@ -14,8 +14,25 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+/**
+ * The display face, used on headings, the wordmark and figures.
+ *
+ * It is already one of the five families a Brand Kit can pick, so the chrome
+ * speaks the product's own typographic language. This copy comes from
+ * next/font as a subset woff2 rather than the full TTF in public/fonts, which
+ * exists for Satori and is an order of magnitude larger.
+ */
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
+
 export const metadata: Metadata = {
-  title: "Compose",
+  title: {
+    default: "Compose",
+    template: "%s · Compose",
+  },
   description:
     "Your personal AI content designer. Turn ideas, projects and lessons into on-brand Instagram posts.",
 };
@@ -32,7 +49,7 @@ export default function RootLayout({
           element only, so real mismatches inside the app still surface. */}
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} antialiased`}
       >
         <ThemeProvider>{children}</ThemeProvider>
       </body>

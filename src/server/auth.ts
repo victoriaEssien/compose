@@ -59,6 +59,13 @@ export async function requireUserId() {
   return session.user.id;
 }
 
+/** The whole user, for the chrome that shows who is signed in. */
+export async function requireUser() {
+  const session = await getSession();
+  if (!session) redirect("/sign-in");
+  return session.user;
+}
+
 export async function currentUserId() {
   return (await getSession())?.user.id ?? null;
 }

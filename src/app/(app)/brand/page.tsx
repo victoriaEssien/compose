@@ -1,8 +1,11 @@
+import { PageHeader } from "@/components/page-header";
 import { listAssets } from "@/server/assets";
 import { requireUserId } from "@/server/auth";
 import { loadBrandKit } from "@/server/brand";
 import { postMetrics } from "@/server/posts";
 import { BrandKitForm } from "./brand-kit-form";
+
+export const metadata = { title: "Brand Kit" };
 
 export default async function Page({
   searchParams,
@@ -18,17 +21,20 @@ export default async function Page({
   ]);
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
-      <h1 className="text-2xl font-semibold">{welcome ? "Welcome to Compose" : "Brand Kit"}</h1>
-      <p className="text-muted-foreground mt-2 max-w-xl text-sm text-pretty">
-        {welcome
-          ? "Start here. Your handle is drawn on every slide and these fonts and colors shape every post, so a minute spent here is what makes the rest look like you."
-          : "Every post Compose generates follows these."}
-      </p>
+    <>
+      <PageHeader
+        eyebrow={welcome ? "First things first" : undefined}
+        title={welcome ? "Welcome to Compose" : "Brand Kit"}
+        description={
+          welcome
+            ? "Start here. Your handle is drawn on every slide and these fonts and colours shape every post, so a minute spent here is what makes the rest look like you."
+            : "Every post Compose generates follows these."
+        }
+      />
 
-      <div className="mt-10">
+      <div className="mt-8">
         <BrandKitForm initial={kit} assets={assets} postCount={metrics.generated} />
       </div>
-    </main>
+    </>
   );
 }

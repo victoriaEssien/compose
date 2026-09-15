@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Fragment } from "react";
 
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { listAssets } from "@/server/assets";
 import { listSavedDesigns } from "@/server/designs";
 import { requireUserId } from "@/server/auth";
@@ -59,49 +59,55 @@ export default async function Page({
     Number.isInteger(requested) && requested >= 1 && requested <= slides.length ? requested - 1 : 0;
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
-      <nav aria-label="Breadcrumb" className="mb-6">
+    <>
+      <nav aria-label="Breadcrumb" className="mb-5">
         <Link
           href="/dashboard"
-          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex items-center gap-1.5 rounded-sm text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex items-center gap-1 rounded-sm text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
         >
           <ChevronLeft className="size-4" />
-          Your content
+          Posts
         </Link>
       </nav>
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-muted-foreground text-xs">
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+        <div className="min-w-0">
+          <p className="text-muted-foreground text-[0.6875rem] font-medium tracking-[0.08em] uppercase">
             {postTypeLabels[post.type]} · {slides.length} slides
           </p>
-          <h1 className="mt-2 text-2xl font-semibold break-words">{post.title}</h1>
+          <h1 className="font-display mt-2 text-[1.6rem] leading-tight font-semibold wrap-break-word sm:text-[1.875rem]">
+            {post.title}
+          </h1>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <PostStatusSelect postId={post.id} status={post.status} />
-          {(["carousel", "square"] as const).map((option) => (
-            <Button
-              key={option}
-              asChild
-              size="sm"
-              variant={option === format ? "default" : "outline"}
-            >
+          {/* Two states of one setting, so they read as one control. */}
+          <div className="bg-muted flex items-center gap-0.5 rounded-lg p-0.5">
+            {(["carousel", "square"] as const).map((option) => (
               <Link
+                key={option}
                 href={`/posts/${post.id}?format=${option}&slide=${startAt + 1}`}
+                aria-current={option === format ? "true" : undefined}
                 aria-label={
                   option === "carousel"
                     ? "Carousel format, 1080 by 1350"
                     : "Square format, 1080 by 1080"
                 }
+                className={cn(
+                  "focus-visible:ring-ring flex h-8 items-center gap-1.5 rounded-md px-2.5 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none",
+                  option === format
+                    ? "bg-card text-foreground shadow-card font-medium"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
               >
                 {option === "carousel" ? "Carousel" : "Square"}
-                <span className="text-[10px] opacity-60">
+                <span className="text-[0.625rem] opacity-60" data-numeric>
                   {option === "carousel" ? "4:5" : "1:1"}
                 </span>
               </Link>
-            </Button>
-          ))}
+            ))}
+          </div>
           <ExportPanel
             postId={post.id}
             format={format}
@@ -112,7 +118,7 @@ export default async function Page({
         </div>
       </div>
 
-      <div className="mt-10">
+      <div className="mt-8">
         <PostEditor
           postId={post.id}
           format={format}
@@ -142,6 +148,6 @@ export default async function Page({
           slideHeight={size.height}
         />
       </div>
-    </main>
+    </>
   );
 }

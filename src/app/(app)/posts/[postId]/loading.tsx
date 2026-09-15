@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export default function Loading() {
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
+    <div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <Skeleton className="h-9 w-64" />
         <Skeleton className="h-8 w-48" />
@@ -24,6 +24,6 @@ export default function Loading() {
           ))}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

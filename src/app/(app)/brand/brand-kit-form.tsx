@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 
-import { AssetPicker } from "@/components/asset-picker";
+import { ImageField } from "@/components/image-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,44 +58,6 @@ function Section({
       </div>
       {children}
     </section>
-  );
-}
-
-function AssetUrlField({
-  id,
-  label,
-  assets,
-  value,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  assets: AssetRow[];
-  value: string | null;
-  onChange: (value: string | null) => void;
-}) {
-  return (
-    <div className="grid gap-2">
-      <Label htmlFor={id}>{label}</Label>
-      <div className="flex items-center gap-2">
-        <Input
-          id={id}
-          type="url"
-          placeholder="https://"
-          value={value ?? ""}
-          onChange={(e) => onChange(e.target.value || null)}
-        />
-        <AssetPicker
-          assets={assets}
-          onSelect={(asset) => onChange(asset.url)}
-          trigger={
-            <Button type="button" variant="outline">
-              Choose
-            </Button>
-          }
-        />
-      </div>
-    </div>
   );
 }
 
@@ -167,16 +129,18 @@ export function BrandKitForm({
                 required
               />
             </div>
-            <AssetUrlField
+            <ImageField
               id="logoUrl"
               label="Logo"
               assets={assets}
               value={kit.logoUrl}
               onChange={(value) => set("logoUrl", value)}
             />
-            <AssetUrlField
+            <ImageField
               id="avatarUrl"
               label="Avatar"
+              shape="circle"
+              hint="Drawn in the footer of every slide, beside your handle."
               assets={assets}
               value={kit.avatarUrl}
               onChange={(value) => set("avatarUrl", value)}

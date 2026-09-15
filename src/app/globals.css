@@ -84,10 +84,24 @@
   font-display: swap;
 }
 
+
+/*
+ * Compose runs on paper, not on white.
+ *
+ * The app frames work whose colours belong to the user: a Brand Kit can be
+ * near-black violet, phosphor green or warm cream, and all of it is on screen at
+ * once. So the chrome is deliberately quiet in the field and precise in the
+ * detail. A warm off-white ground, warm ink, and one indigo that appears only on
+ * the primary action, the active route and the focus ring.
+ *
+ * Every pair below was measured. Ratios in the comments are WCAG 2.x contrast
+ * against the surface named, and none of them is decorative guesswork.
+ */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-space-grotesk);
   --font-mono: var(--font-geist-mono);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -105,63 +119,125 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-surface: var(--surface);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-draft: var(--draft);
+  --color-draft-surface: var(--draft-surface);
+  --color-ready: var(--ready);
+  --color-ready-surface: var(--ready-surface);
+  --color-exported: var(--exported);
+  --color-exported-surface: var(--exported-surface);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 10px);
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  /* 5.10:1 on white. The generated 0.556 was 4.73:1, and it carries real
-     information at 12px in a dozen places. */
-  --muted-foreground: #6e6e6e;
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  /* Decorative container edges. Not a UI component boundary, so 3:1 does not
-     apply, but the generated 0.922 was nearly invisible. */
-  --border: #dcdcdc;
-  /* The edge of an input, select or textarea, which WCAG 1.4.11 does cover.
-     3.03:1 on white; the generated value was 1.26:1. */
-  --input: #949494;
-  /* 5.33:1, and used at full opacity so the composite is the real ratio. */
-  --ring: #6b6b6b;
+  --radius: 0.75rem;
+
+  /* Paper and ink. 16.7:1. */
+  --background: #faf9f6;
+  --foreground: #1a1917;
+
+  /* White, so a card carrying the user's work lifts off the page. */
+  --card: #ffffff;
+  --card-foreground: #1a1917;
+  --popover: #ffffff;
+  --popover-foreground: #1a1917;
+
+  /* A half-step under the page: the shell recedes, the work comes forward. */
+  --surface: #f4f2ed;
+  --sidebar: #f4f2ed;
+  --sidebar-border: #e6e3db;
+
+  /* Indigo. 7.7:1 on paper, and white on it is 8.1:1. */
+  --primary: #3341b8;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f1efe9;
+  --secondary-foreground: #1a1917;
+  --muted: #f1efe9;
+  /* 5.3:1 on paper, 5.6:1 on a card, 5.0:1 on the sidebar. */
+  --muted-foreground: #6b6862;
+  --accent: #ebe8e1;
+  --accent-foreground: #1a1917;
+
+  /* 6.2:1 on paper, and white on it is 6.5:1. */
+  --destructive: #b3261e;
+
+  /* Decorative container edges, which WCAG 1.4.11 does not cover. Visible. */
+  --border: #e4e1d9;
+  /* The edge of an input, select or textarea, which 1.4.11 does cover. 3.0:1. */
+  --input: #95908a;
+  /* The brand colour, so focus reads as Compose rather than as an OS artifact. */
+  --ring: #3341b8;
+
+  /* Post status. Each foreground is measured on its own tint. */
+  --draft: #96600a;
+  --draft-surface: #fbf3e2;
+  --ready: #166534;
+  --ready-surface: #eaf4ec;
+  --exported: #3341b8;
+  --exported-surface: #ecedfa;
+
+  /*
+   * Two-layer shadows: a tight contact edge plus a wider, softer cast. Warm and
+   * low-alpha, because a neutral black shadow on warm paper looks like dirt.
+   */
+  --shadow-card: 0 1px 2px rgb(34 30 22 / 0.05), 0 1px 3px rgb(34 30 22 / 0.04);
+  --shadow-lift: 0 2px 4px rgb(34 30 22 / 0.05), 0 8px 20px -6px rgb(34 30 22 / 0.12);
+  --shadow-pop: 0 8px 12px -4px rgb(34 30 22 / 0.09), 0 24px 44px -12px rgb(34 30 22 / 0.2);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  /* 1.91:1, decorative. */
-  --border: oklch(1 0 0 / 22%);
-  /* 3.77:1 over the page, 3.84:1 over a card. Was 1.47:1. */
-  --input: oklch(1 0 0 / 40%);
-  /* 7.66:1. Was 4.18:1, which passed, but the ring should be unmistakable. */
-  --ring: oklch(0.708 0 0);
+  /* Warm charcoal rather than neutral black, so it stays the same room. 16.6:1. */
+  --background: #151412;
+  --foreground: #f5f3ef;
+
+  --card: #1d1b18;
+  --card-foreground: #f5f3ef;
+  --popover: #1d1b18;
+  --popover-foreground: #f5f3ef;
+
+  --surface: #1d1b18;
+  --sidebar: #111110;
+  --sidebar-border: #2a2724;
+
+  /* 3.3:1 against the page, and white on it is 5.5:1. */
+  --primary: #4e5bd8;
+  --primary-foreground: #ffffff;
+
+  --secondary: #262421;
+  --secondary-foreground: #f5f3ef;
+  --muted: #262421;
+  /* 7.1:1 on the page, 6.6:1 on a card, 6.0:1 on a secondary surface. */
+  --muted-foreground: #a5a098;
+  --accent: #2e2b27;
+  --accent-foreground: #f5f3ef;
+
+  /* 6.6:1 on the page. */
+  --destructive: #ff6b60;
+
+  --border: #2a2724;
+  /* 3.4:1 on the page, 3.2:1 on a card. */
+  --input: #6e6a62;
+  /* 9.2:1. Bright, because a focus ring is the one thing that must not be missed. */
+  --ring: #a9b2ff;
+
+  --draft: #e3b341;
+  --draft-surface: #2a2215;
+  --ready: #6ee7a0;
+  --ready-surface: #15251b;
+  --exported: #a9b2ff;
+  --exported-surface: #1b1d35;
+
+  /* Shadows do almost nothing on a dark ground, so borders carry the elevation. */
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.3), 0 8px 20px -6px rgb(0 0 0 / 0.45);
+  --shadow-pop: 0 8px 12px -4px rgb(0 0 0 / 0.4), 0 24px 44px -12px rgb(0 0 0 / 0.6);
 }
 
 @layer base {
@@ -170,7 +246,31 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-synthesis-weight: none;
   }
+  /*
+   * Counts, indexes, slide numbers and dates all sit in columns that change as
+   * you work. Proportional digits make them jitter.
+   */
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@utility font-display {
+  font-family: var(--font-display), var(--font-geist-sans), sans-serif;
+  letter-spacing: -0.022em;
+}
+
+/* The elevation scale, so a card never invents its own shadow. */
+@utility shadow-card {
+  box-shadow: var(--shadow-card);
+}
+@utility shadow-lift {
+  box-shadow: var(--shadow-lift);
+}
+@utility shadow-pop {
+  box-shadow: var(--shadow-pop);
 }
 
 /*

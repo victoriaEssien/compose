@@ -1,19 +1,22 @@
 import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
 import { requireUserId } from "@/server/auth";
 import { listAssets } from "@/server/assets";
 import { AssetList } from "./asset-list";
 import { AssetUploader } from "./asset-uploader";
+
+export const metadata = { title: "Assets" };
 
 export default async function Page() {
   const userId = await requireUserId();
   const assets = await listAssets(userId);
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
-      <h1 className="text-2xl font-semibold">Your assets</h1>
-      <p className="text-muted-foreground mt-2 text-sm">
-        Screenshots, logos, avatars and illustrations you can reuse across posts.
-      </p>
+    <>
+      <PageHeader
+        title="Assets"
+        description="Screenshots, logos, avatars and illustrations you can reuse across posts."
+      />
 
       <div className="mt-8">
         <AssetUploader />
@@ -29,6 +32,6 @@ export default async function Page() {
           />
         )}
       </div>
-    </main>
+    </>
   );
 }
