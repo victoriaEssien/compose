@@ -135,6 +135,8 @@ export const post = pgTable(
     originalContent: text().notNull(),
     /** The validated PostSpec as generated, kept for regeneration and diffing. */
     generatedContent: jsonb().$type<PostSpec>(),
+    /** Set on the first download. Drives the idea-to-export metric (spec section 34). */
+    firstExportedAt: timestamp({ withTimezone: true }),
     createdAt,
     updatedAt,
   },

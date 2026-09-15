@@ -145,9 +145,10 @@ export function PostEditor({
               key={row.id}
               type="button"
               onClick={() => setActive(at)}
+              aria-label={`Slide ${at + 1}`}
               aria-current={at === index ? "true" : undefined}
               className={cn(
-                "rounded-md px-2.5 py-1 text-xs transition-colors",
+                "focus-visible:ring-ring rounded-md px-2.5 py-1 text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none",
                 at === index
                   ? "bg-accent text-accent-foreground"
                   : "text-muted-foreground hover:text-foreground",
@@ -165,12 +166,19 @@ export function PostEditor({
         ))}
 
         <div className="flex flex-wrap items-center justify-center gap-2">
-          <Button variant="outline" size="sm" disabled={index === 0} onClick={() => move(-1)}>
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label="Move this slide earlier"
+            disabled={index === 0}
+            onClick={() => move(-1)}
+          >
             &larr; Move
           </Button>
           <Button
             variant="outline"
             size="sm"
+            aria-label="Move this slide later"
             disabled={index === slides.length - 1}
             onClick={() => move(1)}
           >
@@ -203,7 +211,9 @@ export function PostEditor({
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-sm font-medium">Slide {index + 1}</h2>
-          <span className="text-muted-foreground text-xs">{busy ? "Working" : (status ?? "")}</span>
+          <span aria-live="polite" className="text-muted-foreground text-xs">
+            {busy ? "Working" : (status ?? "")}
+          </span>
         </div>
 
         {error && (

@@ -1,6 +1,7 @@
 import { zipSync } from "fflate";
 
 import { currentUserId } from "@/server/auth";
+import { markExported } from "@/server/posts";
 import { loadRenderablePost, parseFormat } from "@/server/render/post";
 import { slidePng } from "@/server/render/slide";
 
@@ -36,6 +37,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ post
       return new Uint8Array(await response.arrayBuffer());
     }),
   );
+
+  await markExported(userId, postId);
 
   const name = slugify(found.post.title);
   const files = Object.fromEntries(

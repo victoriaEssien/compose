@@ -15,6 +15,9 @@ const schema = z.object({
   OPENAI_API_KEY: z.string().min(1),
   OPENAI_MODEL: z.string().default("gpt-5.1"),
   BLOB_READ_WRITE_TOKEN: z.string().optional(),
+  // Set by Vercel, hostname only. Used to trust the origin a deployment is served from.
+  VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
+  VERCEL_URL: z.string().optional(),
 });
 
 export type Env = z.infer<typeof schema>;

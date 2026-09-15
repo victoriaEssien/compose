@@ -11,10 +11,23 @@ import { seedBrandKit } from "./brand";
 import { db } from "./db/client";
 import * as schema from "./db/schema";
 
+/**
+ * Vercel gives every deployment its own hostname, so a single BETTER_AUTH_URL
+ * cannot match them all and the origin check would reject sign-in.
+ */
+function vercelOrigins() {
+  const { VERCEL_PROJECT_PRODUCTION_URL, VERCEL_URL } = env();
+
+  return [VERCEL_PROJECT_PRODUCTION_URL, VERCEL_URL]
+    .filter((host): host is string => Boolean(host))
+    .map((host) => `https://${host}`);
+}
+
 export const auth = betterAuth({
   appName: "Compose",
   baseURL: env().BETTER_AUTH_URL,
   secret: env().BETTER_AUTH_SECRET,
+  trustedOrigins: vercelOrigins(),
   database: drizzleAdapter(db(), { provider: "pg", schema }),
   emailAndPassword: { enabled: true, minPasswordLength: 8 },
   databaseHooks: {

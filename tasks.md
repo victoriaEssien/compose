@@ -101,12 +101,12 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 
 ## Phase 8: Drafts, polish, deploy
 
-- [ ] Drafts list and resume editing from the dashboard
-- [ ] Mark post as ready / exported
-- [ ] Track time from post created to first export (spec section 34 primary metric)
-- [ ] Track generated vs exported posts (spec section 34 secondary metric)
-- [ ] Responsive pass and accessibility pass
-- [ ] Deploy to Vercel, set env vars, run migrations
+- [x] Drafts list and resume editing from the dashboard
+- [x] Mark post as ready / exported (downloading marks it exported)
+- [x] Track time from post created to first export (spec section 34 primary metric)
+- [x] Track generated vs exported posts (spec section 34 secondary metric)
+- [x] Responsive pass and accessibility pass
+- [x] Deploy to Vercel, set env vars, run migrations. Migrations apply automatically through `pnpm vercel-build`
 - [ ] Dogfood: create 3 real carousels end to end in under 5 minutes each
 
 ---

@@ -6,7 +6,7 @@ import { regenerateSlide } from "@/server/ai/regenerate";
 import { AiError } from "@/server/ai/structured";
 import { requireUserId } from "@/server/auth";
 import { loadBrandKit } from "@/server/brand";
-import { loadPost } from "@/server/posts";
+import { loadPost, setPostStatus } from "@/server/posts";
 import {
   deleteSlide,
   duplicateSlide,
@@ -15,6 +15,7 @@ import {
   updateSlide,
 } from "@/server/slides";
 import { remapSlide } from "@/templates";
+import { postStatusSchema } from "@/types/post";
 import {
   regenerateActionSchema,
   slideDesignConfigSchema,
@@ -165,6 +166,21 @@ export async function regenerateSlideAction(
     content: rewritten,
     designConfig: target.designConfig,
   });
+
+  revalidate(postId);
+  return done;
+}
+
+export async function setPostStatusAction(
+  postId: string,
+  status: unknown,
+): Promise<SlideActionResult> {
+  const userId = await requireUserId();
+
+  const parsed = postStatusSchema.safeParse(status);
+  if (!parsed.success) return { ok: false, error: "That is not a status." };
+
+  if (!(await setPostStatus(userId, postId, parsed.data))) return missing;
 
   revalidate(postId);
   return done;

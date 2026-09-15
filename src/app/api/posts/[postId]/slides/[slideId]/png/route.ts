@@ -1,4 +1,5 @@
 import { currentUserId } from "@/server/auth";
+import { markExported } from "@/server/posts";
 import { loadRenderablePost, parseFormat } from "@/server/render/post";
 import { slidePng } from "@/server/render/slide";
 
@@ -15,6 +16,8 @@ export async function GET(
 
   const index = found.slides.findIndex((row) => row.id === slideId);
   if (index < 0) return new Response("Not found", { status: 404 });
+
+  await markExported(userId, postId);
 
   return slidePng(
     found.inputs[index],

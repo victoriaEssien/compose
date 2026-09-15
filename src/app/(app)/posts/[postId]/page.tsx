@@ -7,9 +7,10 @@ import { listAssets } from "@/server/assets";
 import { requireUserId } from "@/server/auth";
 import { loadRenderablePost, parseFormat } from "@/server/render/post";
 import { PostEditor } from "./post-editor";
+import { PostStatusSelect } from "./post-status";
 
-const statusLabels = { draft: "Draft", ready: "Ready", exported: "Exported" } as const;
-const previewWidth = 360;
+// 320 plus the page gutters still fits a 400px screen without sideways scroll.
+const previewWidth = 320;
 
 export default async function Page({
   params,
@@ -49,12 +50,13 @@ export default async function Page({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-muted-foreground text-xs">
-            {statusLabels[post.status]} · {post.type.replaceAll("_", " ")} · {slides.length} slides
+            {post.type.replaceAll("_", " ")} · {slides.length} slides
           </p>
           <h1 className="mt-2 text-2xl font-semibold">{post.title}</h1>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <PostStatusSelect postId={post.id} status={post.status} />
           {(["carousel", "square"] as const).map((option) => (
             <Button
               key={option}
@@ -62,7 +64,14 @@ export default async function Page({
               size="sm"
               variant={option === format ? "default" : "outline"}
             >
-              <Link href={`/posts/${post.id}?format=${option}`}>
+              <Link
+                href={`/posts/${post.id}?format=${option}`}
+                aria-label={
+                  option === "carousel"
+                    ? "Carousel format, 1080 by 1350"
+                    : "Square format, 1080 by 1080"
+                }
+              >
                 {option === "carousel" ? "4:5" : "1:1"}
               </Link>
             </Button>
