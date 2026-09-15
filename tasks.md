@@ -16,10 +16,10 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 - [x] Prettier (+ Tailwind plugin), Vitest, CI workflow
 - [x] Placeholder routes: `/`, `/sign-in`, `/dashboard`, `/posts/new`, `/posts/[postId]`, `/brand`, `/assets`, `/api/health`
 - [x] Spec in `docs/spec.md`, this task list
-- [ ] `pnpm install`, `git init`, first commit, push to GitHub (personal account)
-- [ ] Create a Postgres database (Neon) and fill in `.env.local`
+- [x] `pnpm install`, `git init`, first commit, push to GitHub (personal account)
+- [x] Create a Postgres database (Neon) and fill in `.env.local`
 - [ ] Create a Vercel Blob store and add `BLOB_READ_WRITE_TOKEN`
-- [ ] Add the shadcn components needed early: `pnpm dlx shadcn@latest add input textarea label select card dialog dropdown-menu tabs sonner skeleton`
+- [x] Add the shadcn components needed early: `pnpm dlx shadcn@latest add input textarea label select card dialog dropdown-menu tabs sonner skeleton`
 
 ## Phase 1: Data model and shared schemas
 
