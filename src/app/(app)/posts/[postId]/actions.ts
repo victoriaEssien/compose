@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { generateCaption } from "@/server/ai/caption";
 import { generateIllustration } from "@/server/ai/illustration";
 import { regenerateSlide } from "@/server/ai/regenerate";
 import { AiError } from "@/server/ai/structured";
@@ -20,6 +21,7 @@ import {
 } from "@/server/slides";
 import { uploadGeneratedImage } from "@/server/storage/blob";
 import { remapSlide } from "@/templates";
+import type { Caption } from "@/types/caption";
 import { postStatusSchema } from "@/types/post";
 import {
   regenerateActionSchema,
@@ -217,6 +219,39 @@ export async function regenerateSlideAction(
 
   revalidate(postId);
   return done;
+}
+
+/**
+ * The caption for the completion panel. Separate from export so a model failure
+ * never costs the user their download, which is the thing they actually came for.
+ */
+export async function generateCaptionAction(
+  postId: string,
+): Promise<{ ok: true; caption: Caption } | { ok: false; error: string }> {
+  const userId = await requireUserId();
+
+  const [found, brand] = await Promise.all([loadPost(userId, postId), loadBrandKit(userId)]);
+  if (!found) return { ok: false, error: "That post is gone. Reload the page." };
+
+  try {
+    const caption = await generateCaption({
+      brand,
+      postTitle: found.post.title,
+      originalContent: found.post.originalContent,
+      slides: found.slides.map((row) => row.content),
+    });
+
+    return { ok: true, caption };
+  } catch (failure) {
+    console.error("generateCaption failed", failure);
+    return {
+      ok: false,
+      error:
+        failure instanceof AiError
+          ? "The model could not write a usable caption. Try again."
+          : "Caption generation failed. Check your connection and try again.",
+    };
+  }
 }
 
 export async function setPostStatusAction(

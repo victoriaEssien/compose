@@ -7,6 +7,7 @@ import { requireUserId } from "@/server/auth";
 import { loadRenderablePost, parseFormat } from "@/server/render/post";
 import { slideElement } from "@/server/render/slide";
 import { formatSizes } from "@/templates";
+import { ExportPanel } from "./export-panel";
 import { PostEditor } from "./post-editor";
 import { PostStatusSelect } from "./post-status";
 
@@ -69,11 +70,13 @@ export default async function Page({
               </Link>
             </Button>
           ))}
-          <Button asChild size="sm">
-            <a href={`/api/posts/${post.id}/export?format=${format}`} download>
-              Download all
-            </a>
-          </Button>
+          <ExportPanel
+            postId={post.id}
+            format={format}
+            slideCount={slides.length}
+            width={size.width}
+            height={size.height}
+          />
         </div>
       </div>
 

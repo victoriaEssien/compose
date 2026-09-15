@@ -189,10 +189,25 @@ slide at up to 592px, where body copy renders around 17px instead of 9.5px.
 
 ### 3.6 Export ends in silence
 
-- [ ] Convert export to a client component with a pending state. Both export links are bare `<a download>` with no client state at all while the server renders N PNGs sequentially (`post-editor.tsx:240-244`, `posts/[postId]/page.tsx:79-83`)
-- [ ] Add a completion panel: thumbnails, slide count, dimensions, filename, and the final slide's CTA text ready to copy. Peak-end is currently inverted, the product peaks in the middle and ends on a browser download shelf
-- [ ] Stop `markExported` firing on a single-slide download (`api/posts/[postId]/slides/[slideId]/png/route.ts:20`). Inspecting one image silently flips the whole post to Exported, drops it out of `listDrafts` and moves it between dashboard sections
-- [ ] **[BLOCKED]** Caption generation in the completion panel. See [D3](#d3-caption-generation-at-the-export-moment)
+- [x] Convert export to a client component with a pending state. Both export links are bare `<a download>` with no client state at all while the server renders N PNGs sequentially (`post-editor.tsx:240-244`, `posts/[postId]/page.tsx:79-83`)
+- [x] Add a completion panel: slide count, dimensions, filename, and a caption ready to copy. Peak-end is currently inverted, the product peaks in the middle and ends on a browser download shelf
+- [x] Stop `markExported` firing on a single-slide download (`api/posts/[postId]/slides/[slideId]/png/route.ts:20`). Done in Round 2
+- [x] Caption generation in the completion panel. **D3 was answered "do it"**
+- [ ] The per-slide Download in the editor is still a bare `<a download>`. One slide renders fast enough that the silence is short, but it should share the panel's pending treatment
+
+New `ExportPanel` fetches the zip rather than navigating to it, so it can show
+"Rendering N slides..." during the wait, surface the 409 from a placeholder
+handle as readable text instead of a blank page, and open a completion dialog
+naming the count, the dimensions and the filename.
+
+Caption generation was **decoupled from Instagram publishing**, which is what
+had kept it in the Backlog. New `server/ai/caption.ts` and
+`prompts/caption.v1.ts` follow the same provider and `generateStructured`
+pattern as regenerate, with 5 new tests against a mocked provider. It is a
+separate action from the export, so a model failure never costs the user the
+download they actually came for. The shared shape lives in
+`src/types/caption.ts` so the client can call `captionText` without importing a
+`server-only` module.
 
 ---
 
