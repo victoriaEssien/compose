@@ -48,14 +48,17 @@ const aliases: Record<string, string> = {
   postgresql: "sql",
 };
 
-let pending: Promise<Highlighter> | undefined;
+// A highlighter carries its own WASM and grammars, so one per process is the
+// budget. Module scope cannot hold that: dev reloads re-evaluate the module and
+// each route bundle gets its own copy, which is what leaked ten of them.
+const cache = globalThis as typeof globalThis & { shikiHighlighter?: Promise<Highlighter> };
 
 function highlighter() {
-  pending ??= createHighlighter({
+  cache.shikiHighlighter ??= createHighlighter({
     langs: [...languages],
     themes: ["github-dark", "github-light"],
   });
-  return pending;
+  return cache.shikiHighlighter;
 }
 
 export async function highlightCode(
