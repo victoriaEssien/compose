@@ -1,6 +1,6 @@
 /** Slide edits (spec section 13). Every call proves the post belongs to the user. */
 import "server-only";
-import { and, asc, eq, gt, sql } from "drizzle-orm";
+import { and, asc, eq, gt, gte, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 
 import type { SlideDesignConfig, SlideSpec } from "@/types/slide";
@@ -88,6 +88,39 @@ export async function deleteSlide(userId: string, postId: string, slideId: strin
   await db()
     .delete(slide)
     .where(and(eq(slide.id, slideId), eq(slide.postId, postId)));
+  await compactOrder(postId);
+
+  return true;
+}
+
+/**
+ * Puts a slide back at a given position. Undo for a delete: the row is gone, but
+ * its content came back from the client, and deleteSlide never touched the blob
+ * so a generated illustration is still at the same URL.
+ */
+export async function insertSlideAt(
+  userId: string,
+  postId: string,
+  at: number,
+  data: { content: SlideSpec; designConfig: SlideDesignConfig | null; imageUrl: string | null },
+) {
+  if (!(await ownsPost(userId, postId))) return false;
+
+  // Open the gap before inserting, so nothing shares the target order.
+  await db()
+    .update(slide)
+    .set({ order: sql`${slide.order} + 1` })
+    .where(and(eq(slide.postId, postId), gte(slide.order, at)));
+
+  await db().insert(slide).values({
+    postId,
+    order: at,
+    template: data.content.template,
+    content: data.content,
+    designConfig: data.designConfig,
+    imageUrl: data.imageUrl,
+  });
+
   await compactOrder(postId);
 
   return true;

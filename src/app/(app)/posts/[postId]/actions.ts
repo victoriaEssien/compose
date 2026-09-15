@@ -11,6 +11,7 @@ import { loadPost, setPostStatus } from "@/server/posts";
 import {
   deleteSlide,
   duplicateSlide,
+  insertSlideAt,
   loadSlide,
   moveSlide,
   setSlideIllustration,
@@ -109,6 +110,33 @@ export async function deleteSlideAction(
   if (!(await deleteSlide(userId, postId, slideId))) {
     return { ok: false, error: "A post needs at least one slide." };
   }
+
+  revalidate(postId);
+  return done;
+}
+
+/** Undo for a delete. The client kept the slide it was holding, so it can hand it back. */
+export async function restoreSlideAction(
+  postId: string,
+  at: number,
+  content: unknown,
+  designConfig: unknown,
+  imageUrl: string | null,
+): Promise<SlideActionResult> {
+  const userId = await requireUserId();
+
+  const parsedContent = slideSpecSchema.safeParse(content);
+  if (!parsedContent.success) return { ok: false, error: firstIssue(parsedContent.error) };
+
+  const parsedDesign = slideDesignConfigSchema.safeParse(designConfig ?? {});
+  if (!parsedDesign.success) return { ok: false, error: firstIssue(parsedDesign.error) };
+
+  const restored = await insertSlideAt(userId, postId, Math.max(0, at), {
+    content: parsedContent.data,
+    designConfig: Object.keys(parsedDesign.data).length > 0 ? parsedDesign.data : null,
+    imageUrl,
+  });
+  if (!restored) return missing;
 
   revalidate(postId);
   return done;

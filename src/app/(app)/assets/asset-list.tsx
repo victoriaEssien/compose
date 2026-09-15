@@ -3,6 +3,16 @@
 import Image from "next/image";
 import { useState, useTransition } from "react";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,6 +34,7 @@ import { deleteAssetAction, renameAssetAction } from "./actions";
 
 export function AssetList({ assets }: { assets: AssetRow[] }) {
   const [renaming, setRenaming] = useState<AssetRow | null>(null);
+  const [deleting, setDeleting] = useState<AssetRow | null>(null);
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -46,6 +57,7 @@ export function AssetList({ assets }: { assets: AssetRow[] }) {
   }
 
   function remove(row: AssetRow) {
+    setDeleting(null);
     startTransition(async () => {
       const result = await deleteAssetAction(row.id);
       setError(result.error);
@@ -74,12 +86,12 @@ export function AssetList({ assets }: { assets: AssetRow[] }) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" disabled={pending}>
-                    Edit
+                    {pending ? "Working..." : "Edit"}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onSelect={() => openRename(row)}>Rename</DropdownMenuItem>
-                  <DropdownMenuItem variant="destructive" onSelect={() => remove(row)}>
+                  <DropdownMenuItem variant="destructive" onSelect={() => setDeleting(row)}>
                     Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -94,6 +106,24 @@ export function AssetList({ assets }: { assets: AssetRow[] }) {
           {error}
         </p>
       )}
+
+      <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {deleting?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The file is removed from storage, so this cannot be undone. Slides already using it
+              will lose their image.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleting && remove(deleting)}>
+              Delete asset
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={renaming !== null} onOpenChange={(open) => !open && setRenaming(null)}>
         <DialogContent>

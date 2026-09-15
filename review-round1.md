@@ -1,0 +1,419 @@
+# Review Round 1: UI/UX remediation
+
+Source: `/impeccable critique` of the whole signed-in app, 2026-09-15. Raw
+assessments in [`.impeccable/critique/critique2.md`](.impeccable/critique/critique2.md),
+condensed snapshot in
+[`.impeccable/critique/2026-09-15T14-06-18Z__src-app.md`](.impeccable/critique/2026-09-15T14-06-18Z__src-app.md).
+
+Score at the time of review: **Nielsen 20/40**, cognitive load **HIGH** (6 of 8
+checks fail), 3 P0 and 2 P1 priority issues.
+
+Headline verdict: the slide renderer is genuinely well authored, the app around
+it is interchangeable shadcn CRUD. Every issue below is one of three things:
+work the app destroys, a decision the app hides, or a promise the app makes and
+does not keep.
+
+**How to use this file:** same rules as [`tasks.md`](tasks.md). Work a round top
+to bottom, tick `[ ]` to `[x]` in the same change as the work, and run
+`pnpm typecheck && pnpm lint && pnpm test` before calling anything done. Items
+marked **[BLOCKED]** wait on an answer in [Decisions needed](#decisions-needed).
+
+Every line carries the file and line number the reviewers cited so nothing has
+to be rediscovered. Line numbers are as of commit `ee775a8`.
+
+---
+
+## Round 1: stop losing user work
+
+The editor destroys work in three separate ways and has no undo anywhere. This
+is a tool for refining copy, so this round comes first.
+
+**Status: done.** `pnpm typecheck`, `pnpm lint` and `pnpm test` (218 passing) all
+green.
+
+### 1.1 Autosave truthfulness
+
+- [x] Hoist the debounced save payload into a ref so it can be flushed on demand (`post-editor.tsx:96-116`)
+- [x] Flush the pending save synchronously inside `setActive` before switching slides (`post-editor.tsx:115`, `editor-state.ts:43`)
+- [x] Flush the pending save at the top of `run()` so every action sees current text (`post-editor.tsx:126-135`)
+- [x] Add a `beforeunload` guard while the draft signature differs from the server signature (`editor-state.ts:22-47` already computes both)
+- [x] Stop `run()` wiping the autosave status to `""` mid-flight (`post-editor.tsx:131`)
+- [x] Give an autosave failure a retry affordance and a persistent "not saved" state, not a message that scrolls past (`post-editor.tsx:251-257`)
+- [x] Keep `shouldAutosave`'s cross-slide guard exactly as it is. It is correct and unit-tested; only the flush was missing (`editor-state.ts:38-47`)
+
+A flush that fails now aborts whatever asked for it. Switching slides with an
+unsaved edit that will not save keeps you on the slide, showing the error and a
+retry, instead of moving on and dropping the text.
+
+### 1.2 Destructive actions
+
+- [x] `pnpm dlx shadcn@latest add alert-dialog`
+- [x] Confirm slide delete, naming the slide and its template ("Delete slide 3, the Comparison slide?") (`post-editor.tsx:232-239`)
+- [x] Confirm asset delete. It deletes the blob too, so it is unrecoverable (`asset-list.tsx:81-84`)
+- [x] Warn before regenerate that it replaces this slide's text, reusing the sentence pattern already at `post-editor.tsx:386-388`
+- [x] Make regenerate read the flushed client content, not stale database rows (`actions.ts:149-172`)
+- [x] Slide Delete now uses `variant="destructive"`, matching asset Delete (was one of the Round 10.3 inconsistencies, fixed here because the button was being rewritten anyway)
+
+### 1.3 Undo
+
+- [x] Mount `<Toaster />` in `(app)/layout.tsx`. `sonner` is installed and `ui/sonner.tsx` is fully configured but `<Toaster />` is mounted nowhere and `toast()` is called nowhere
+- [x] Undo on slide delete via a client-held snapshot or a soft delete
+- [x] Undo on regenerate. `actions.ts:144` already holds `target.content` in hand
+- [x] Undo on template change. `remapSlide` is lossy and the change is currently blind and immediate (`post-editor.tsx:264-280`)
+
+Delete undo went the client-snapshot route rather than a soft delete, so it
+needs no migration. New `insertSlideAt` in `server/slides.ts` and
+`restoreSlideAction` put the slide back at its original index. `deleteSlide`
+never touched the blob, so a restored slide keeps its generated illustration.
+
+### 1.4 Missing pending states
+
+- [x] Disable the template `SelectTrigger` while busy. It is the only control in the editor not gated (`post-editor.tsx:270`)
+- [x] Give asset delete a pending state. The `DropdownMenuItem` shows nothing while the blob deletes (`asset-list.tsx:82`)
+- [x] Give illustration generation its own busy flag instead of sharing `busy` with every other action, which makes unrelated buttons read "Working..." (`post-editor.tsx:299`)
+
+Every action now passes its own label through `run()`, so the live region reads
+"Reordering...", "Generating illustration...", "Undoing..." and so on rather
+than one shared "Working".
+
+---
+
+## Round 2: the front door
+
+Three separate first impressions are broken, and two of them ship a defect into
+a file the user downloads.
+
+### 2.1 Landing page
+
+- [ ] Replace the placeholder at `/` with a redirect: signed in to `/dashboard`, otherwise `/sign-in` (`src/app/page.tsx:8-16`). It currently ships the string "Boilerplate is ready; see tasks.md to start building" to production
+- [ ] **[BLOCKED]** Build the real landing page. See [D7](#d7-landing-page-redirect-only-or-a-real-page)
+
+### 2.2 The placeholder handle in exported PNGs
+
+`defaultBrandKit.username` is `"@yourhandle"` (`types/brand.ts:73`) and `Frame`
+draws it in the footer of every slide (`primitives.tsx:71-83`). Nothing checks.
+A new user's first carousel exports with it burned into all six PNGs.
+
+- [ ] Rewrite `isDefaultBrandKit` to deep-compare the whole kit. It currently compares only `name` and `username`, so a fully configured kit whose name is still "Your brand" reports as not set up (`types/brand.ts:83-85`)
+- [ ] Warn, do not block, on `/posts/new` when the kit is still seeded: "Your posts will be signed @yourhandle"
+- [ ] Block the export routes on a still-default `username`, or substitute the account name (`api/posts/[postId]/export/route.ts`, `api/posts/[postId]/slides/[slideId]/png/route.ts`)
+- [ ] Redirect new users to `/brand` once after sign-up. Better Auth already seeds the kit in the `user.create.after` hook
+
+### 2.3 First run
+
+- [ ] Order the dashboard's two competing CTAs. Brand Kit should come before first post, and nothing currently says so (`dashboard/page.tsx:79-103`)
+- [ ] Give `empty-state.tsx` a visual. Three dashed boxes can stack on an empty dashboard with no illustration and no example
+- [ ] Add a "Try this example" button that prefills `create-post-form` with the debugging paragraph from spec section 7
+- [ ] **[BLOCKED]** Password reset. See [D5](#d5-password-reset-needs-email-infrastructure)
+
+---
+
+## Round 3: show the work
+
+The product has a renderer that draws beautiful images of anything, and uses it
+at zero decision points. This round is the single biggest lever on the
+specificity verdict.
+
+### 3.1 The dashboard is text rows
+
+- [ ] Give `PostCard` a 4:5 thumbnail from the first slide's PNG, cached (`post-card.tsx:15-23`). Spec section 21 draws `[Post] [Post] [Post]` as cards; this renders a title and a date
+- [ ] This is also the only way the user can check grid consistency, which is the product's core promise (spec section 5)
+
+### 3.2 The editor hides the carousel
+
+- [ ] Replace the number strip with a filmstrip of the previews that are already rendered and sitting in the DOM behind `hidden` (`post-editor.tsx:157-175`, previews at `:188-192`). A 64px strip costs nothing extra
+- [ ] Show template, and over-limit state, on each filmstrip item. Nothing currently distinguishes slide 3 from slide 5 except the numeral
+- [ ] **[BLOCKED]** Drag to reorder in the filmstrip. See [D1](#d1-drag-to-reorder-vs-the-no-drag-and-drop-ban)
+
+### 3.3 The preview is too small to judge
+
+- [ ] Make the preview responsive, `min(520px, available)`, instead of hard-coded 320px (`posts/[postId]/page.tsx:13`). At 320px a 1080px slide scales to 0.296, so body copy set at 32 renders at **9.5 CSS pixels** and captions at 7.7px
+- [ ] Add click-to-enlarge at full size. `dialog` is already installed
+- [ ] Make the editor preview sticky. `brand-kit-form.tsx:290` already does this; the editor, where live feedback matters more, does not (`post-editor.tsx:156`)
+
+### 3.4 Nine layouts chosen by name
+
+- [ ] Replace the template dropdown with a grid of miniature renders from `src/templates/fixtures.ts` (`post-editor.tsx:264-280`). Nine options is the largest decision point in the app and it is pure recall in a product built for people who cannot visualize layouts
+
+### 3.5 The visual hint is a guessing game
+
+- [ ] Replace the free-text "Visual hint" field with a picker showing the actual `resolveIcon` vocabulary (`post-editor.tsx:286-293`, `templates/icons.ts`). The placeholder is `database_icon`, an internal identifier, and the help text says to "try another word" without ever revealing which words work
+- [ ] Disclose that "Generate illustration" calls a paid image model and takes seconds, and stop styling it identically to "Duplicate" (`post-editor.tsx:294-303`). `AGENTS.md` states the rule; the UI does not pass it on
+- [ ] Add generated illustrations to the Asset library so a good result can be reused (`actions.ts:217-220`, spec section 16)
+- [x] ~~Clean up orphaned blobs when an illustration is regenerated~~ **Not a defect.** The reviewer flagged this, but `setSlideIllustration` at `server/slides.ts:167` already calls `deleteUserFile` on the previous URL whenever it changes. Verified while implementing Round 1. No change needed
+
+### 3.6 Export ends in silence
+
+- [ ] Convert export to a client component with a pending state. Both export links are bare `<a download>` with no client state at all while the server renders N PNGs sequentially (`post-editor.tsx:240-244`, `posts/[postId]/page.tsx:79-83`)
+- [ ] Add a completion panel: thumbnails, slide count, dimensions, filename, and the final slide's CTA text ready to copy. Peak-end is currently inverted, the product peaks in the middle and ends on a browser download shelf
+- [ ] Stop `markExported` firing on a single-slide download (`api/posts/[postId]/slides/[slideId]/png/route.ts:20`). Inspecting one image silently flips the whole post to Exported, drops it out of `listDrafts` and moves it between dashboard sections
+- [ ] **[BLOCKED]** Caption generation in the completion panel. See [D3](#d3-caption-generation-at-the-export-moment)
+
+---
+
+## Round 4: the Brand Kit
+
+Spec sections 5 and 33 make visual identity the entire differentiator. It got a
+settings form with a preview that lies.
+
+- [ ] Replace `BrandPreview` with real `SlidePreview` output driven by `src/templates/fixtures.ts` (`brand-preview.tsx:3-6`). The comment still reads "Stand-in for the real renderer (Phase 6)"; Phase 6 shipped and `tasks.md:52` is ticked
+- [ ] Show three fixtures at once (Cover, Code, Numbered list) so card style, code block style and illustration style are all visible. Six of eleven controls currently produce no feedback at all: card style, illustration style, code block style, logo, and the secondary font's footer role
+- [ ] Pass previews down as `ReactNode[]` the way `posts/[postId]/page.tsx:34-46` already does, debounced on kit change
+- [ ] Add four starter palettes that set colors, fonts, radius and card style in one click. Spec section 4 says this user is bad at graphic design; four raw hex pickers is the wrong tool for that person
+- [ ] Contrast-check background against text and warn below 4.5:1. `hexColorSchema` currently accepts a pair that renders every slide invisible
+- [ ] Disclose the blast radius on save: `slideTheme()` resolves from `loadBrandKit()` at render time, so a kit edit retroactively restyles every post including ones already marked Exported, and nothing says so
+- [ ] Give the five bare `<section>` elements real headings. Eleven controls, no sectioning, one Save button (`brand-kit-form.tsx`)
+- [ ] Put the save confirmation in a live region. "Saved." is a plain `<span>` while the error branch two lines down has `role="alert"` (`brand-kit-form.tsx:281`)
+- [ ] Resolve "Brand Kit" being an `h1` on `/brand` and an `h2` on `/dashboard:95`
+
+---
+
+## Round 5: the generation wait
+
+Three sequential model calls, roughly 20 seconds, and the client is told
+nothing beyond one static sentence.
+
+- [ ] Report the pipeline stage. `generate-post.ts:22-24` runs analyze, then structure, then plan, and the server knows exactly where it is (`create-post-form.tsx:161-168`)
+- [ ] Use `ui/skeleton.tsx` during the wait. It was installed in Phase 0 for this and is never imported anywhere
+- [ ] Let the user cancel
+- [ ] Handle the retry case. `structured.ts` retries once on invalid output, which doubles the wait while the UI still says "About 20 seconds"
+- [ ] Persist something when the tab closes mid-generation. The model calls complete server-side and are discarded with no trace (`create-post-form.tsx:69-79`)
+- [ ] **[BLOCKED]** Stream the first slide. See [D4](#d4-streaming-generation)
+
+---
+
+## Round 6: states and error routes
+
+`src/app` contains zero `error.tsx`, `loading.tsx`, `not-found.tsx` and
+`global-error.tsx`. There is no `middleware.ts` and no `Suspense` anywhere.
+
+- [ ] `error.tsx` at the root and in `(app)`
+- [ ] `global-error.tsx`
+- [ ] `not-found.tsx`. `posts/[postId]/page.tsx:29` calls `notFound()` today and falls through to the stock Next.js page
+- [ ] `loading.tsx` for `/dashboard`, `/brand`, `/assets`, `/posts/[postId]`
+- [ ] Suspense boundary around the N-slide render on `/posts/[postId]`. It awaits `Promise.all` over every slide before any markup appears (`posts/[postId]/page.tsx:34-46`)
+- [ ] Stop leaking Zod issue paths into user-facing strings. They currently produce text like "items 0 title must not be empty" (`actions.ts:39-42`, `posts/new/actions.ts:20-21`)
+
+---
+
+## Round 7: accessibility
+
+The Phase 8 accessibility pass was real work. Every form field is labelled,
+there are zero raw `<img>` tags and zero div click handlers. It stopped at
+labels and never reached contrast, focus, touch targets, motion or error
+association.
+
+### 7.1 Contrast (measured, not estimated)
+
+- [ ] `border` and `input` vs background: **1.26:1**, needs 3:1. This is the boundary of every Input, Textarea, SelectTrigger and bordered container in the app (`globals.css`)
+- [ ] `ring` vs background in light mode: **2.59:1**, needs 3:1. Affects the two hand-rolled focus rings at `app-nav.tsx:29` and `post-editor.tsx:166`; the shadcn primitives use `ring-ring/50` which composites to roughly 1.7:1 over white
+- [ ] `muted-foreground` vs background: **4.73:1**, passing by 0.23, and it carries real information at 12px in 14 places. Darken it
+- [ ] `muted-foreground` vs `muted`: **4.34:1**, failing. Latent today because no text sits on `bg-muted`, but fix the token
+
+### 7.2 Errors and state
+
+- [ ] Set `aria-invalid` and `aria-describedby` on over-limit fields. Neither attribute is set at a single call site in the codebase (`create-post-form.tsx:86,95,155`, `slide-fields.tsx:34,39,47`)
+- [ ] Stop signalling over-limit by color alone. The counter text is identical in both states (`slide-fields.tsx:34`, `create-post-form.tsx:95`)
+- [ ] Label the regenerate action `Select` and the free-text `Input` under it. These are the only unlabelled controls in the app (`post-editor.tsx:356`, `:368-372`)
+- [ ] Announce sign-out (`sign-out-button.tsx:22`) and post status changes (`post-status.tsx`)
+
+### 7.3 Structure
+
+- [ ] Give `/sign-in` an `h1`. `CardTitle` renders a `div` (`sign-in-form.tsx:53`, `ui/card.tsx:30-34`)
+- [ ] Fix the dangling `aria-controls`. `sign-in-form.tsx:57-107` uses `Tabs` and `TabsTrigger` with no `TabsContent`, so both triggers point at panels that do not exist
+- [ ] Add a skip-to-content link. There are zero in the codebase
+- [ ] Give the slide strip a real role. It is N buttons with `aria-current`, a nav pattern applied to non-nav content (`post-editor.tsx:157-175`)
+- [ ] Label the brand color swatches on the dashboard. Three `size-6` circles with no text and no `aria-label` (`dashboard/page.tsx:109-119`)
+
+### 7.4 Targets and motion
+
+- [ ] Raise touch targets toward 44px. Nothing in the app reaches it: default buttons 36px, `size="sm"` 32px across 19 usages, nav links 32px, slide chips roughly 28x24px, dialog close 16x16px
+- [ ] Add `prefers-reduced-motion` handling. Zero occurrences in the entire `src/` tree, while dialog, select and dropdown all run enter/exit animations unconditionally
+- [ ] `pnpm dlx shadcn@latest add tooltip` and explain disabled controls. `Button` disabled is `opacity-50` with `pointer-events-none`, so a user cannot hover to learn why Generate is off
+
+---
+
+## Round 8: responsive
+
+- [ ] Fix the editor slide row at 390px. It needs **416px** (36 + 12 + 320 + 12 + 36) against **342px** available, and both arrows carry `shrink-0` (`post-editor.tsx:177-203`). The `previewWidth` comment's arithmetic accounts for the page gutters but not for the arrows flanking it
+- [ ] Give `app-nav` a real mobile treatment. Four links plus wordmark plus sign-out exceed 342px and wrap to two or three rows; there is no hamburger, no drawer, and no breakpoint class in the file (`app-nav.tsx:19`, `(app)/layout.tsx:14`)
+- [ ] Add an `md:` layout step. The only two `md:` classes in the app are font-size steps inside input primitives, so the 640 to 1023px band gets the one-column phone layout
+- [ ] Clamp the post title `h1`. No `truncate`, no `line-clamp`, no `break-words`, and there are zero `break-*` utilities in the codebase (`posts/[postId]/page.tsx:55`)
+- [ ] Reconsider preview-above-fields on mobile. Every keystroke is below the fold from the thing it changes (`post-editor.tsx:155`)
+
+---
+
+## Round 9: performance
+
+- [ ] Stop re-rendering every slide on every mutation. Autosave plus all eight `run()` call sites plus `post-status` end in `router.refresh()`, which re-executes the page and re-renders all N previews from scratch, re-running Shiki on every code slide, of which N-1 are immediately hidden. One 900ms typing pause costs 1 DB round trip and N full slide renders
+- [ ] Throttle the `fontScale` range and the color inputs, which fire continuously during a drag (`slide-design.tsx:42,71`)
+- [ ] Consider an optimistic client preview. `slideElement` is pure and could run in the browser, removing the 900ms-plus-server-render lag between typing and seeing
+- [ ] Ship woff2 subsets to the browser and keep the TTFs server-side for Satori. `public/fonts/` is **1.63 MB** across ten unsubsetted TTFs (Inter alone is 651 KB for two faces, versus roughly 15 to 25 KB per woff2 Latin subset). This does not touch the fixed-font-list decision, only the transport
+- [ ] Add `rel="preload"` for the two faces the active kit actually uses
+- [ ] Drop the unnecessary `"use client"` from `slide-fields.tsx` and `slide-design.tsx`. Both are prop-driven render functions with no hooks and no browser API
+
+---
+
+## Round 10: consistency, copy and hierarchy
+
+### 10.1 Copy
+
+- [ ] Move `postTypeLabels` to `src/types/post.ts` and use it on the post page, which currently prints the raw enum lowercase as "things i learned" (`posts/[postId]/page.tsx:53`, `create-post-form.tsx:19-28`)
+- [ ] Change the format toggle to "Carousel" and "Square" with the ratios as secondary text (`posts/[postId]/page.tsx:60-77`)
+- [ ] Settle Title Case versus sentence case. "Your Content", "My Assets", "Recent Posts", "Save Brand Kit" against "Create a post", "Regenerate this slide", "Choose an asset", "Welcome back"
+- [ ] Settle Delete versus Remove. Both describe permanent deletion and nothing distinguishes them (`post-editor.tsx:238,313,336`, `asset-list.tsx:83`, `slide-fields.tsx:142`)
+- [ ] Settle the one feature named three ways: nav "Create Post", dashboard CTA "Create Post", page `h1` "Create a post", submit button "Generate"
+- [ ] Make the regenerate action labels parallel. They currently mix verb-first ("Rewrite", "Change layout") with adjective-phrase ("Make shorter", "More technical") (`post-editor.tsx:41-48`)
+- [ ] Remove the en-GB leakage: "Centre" as a label setting the value `"center"` (`slide-design.tsx:78,86`), `aria-label` "Background colour" beside "Background color picker" for the identical control (`slide-design.tsx:39`, `brand-kit-form.tsx:167`), "emphasise" (`create-post-form.tsx:105`)
+- [ ] Make ellipses consistent. Every pending label uses "..." except the `aria-live` status, which renders bare "Working" and "Saving" (`post-editor.tsx:100,111,252`)
+
+### 10.2 Hierarchy
+
+- [ ] Differentiate the editor's three tree levels, currently all `text-sm font-medium`: "Slide 1" (`:250`), "This slide's design" (`:343`), "Regenerate this slide" (`:350`). Meanwhile the preview, the most important object on the page, gets no emphasis at all
+- [ ] Promote the dashboard section headings. `text-sm font-medium` above a grid reads as a label, not a heading (`dashboard/page.tsx:59,70,95`)
+- [ ] Decide on the success metric line, currently 12px muted text under the page title where nobody will read it (`dashboard/page.tsx:50`). Commit to it or drop it
+- [ ] Break up the editor's five-button row, which runs Move earlier, Move later, Duplicate, Delete, Download with no separation between navigation, destruction and export (`post-editor.tsx:205-245`)
+- [ ] Style the design panel. It is a raw `<details>` and `<summary>` sitting among Cards, with no chevron, so users do not discover per-slide color and size controls (`post-editor.tsx:342-347`)
+
+### 10.3 Visual system
+
+- [ ] Reconcile slide Delete as `variant="outline"` with asset Delete as `variant="destructive"`, the same intent rendered two ways
+- [ ] Replace the `&larr;` and `&rarr;` HTML entities with `ChevronLeft` and `ChevronRight`. `lucide-react` is a dependency with zero icons in the app UI (`post-editor.tsx:185,201`)
+- [ ] Narrow the spacing set. 44 distinct spacing utilities across roughly 3,200 LOC, all on-scale but far too broad; `gap-8`, `gap-5` and `gap-x-6`/`gap-y-2` are singletons
+- [ ] Reconcile `rounded-xl` on `slide-preview.tsx:32` against `rounded-lg` on every sibling container
+- [ ] Widen the type scale. `text-2xl` for page titles then `text-sm`/`text-xs` for everything else is the entire hierarchy; `text-base` never appears outside input defaults
+- [ ] Guard against `slide-fields.tsx:27` deriving input ids from label text. No collision today, but a template with two same-named fields produces duplicate DOM ids silently
+
+---
+
+## Round 11: editor efficiency
+
+- [ ] Keyboard navigation between slides. Arrow keys are inert, so moving between six slides is six mouse trips to a row of digits (`post-editor.tsx:157-202`)
+- [ ] Keyboard shortcuts for the common actions
+- [ ] Preserve the active slide when switching format. It is a `<Link>` navigation that resets to slide 1, so checking the square crop on slide 5 dumps you back to slide 1 (`posts/[postId]/page.tsx:71`)
+- [ ] Prefix-match the nav active state and add a breadcrumb home from the editor. `app-nav.tsx:21` matches `pathname === href` exactly, so `/posts/[id]` highlights nothing and the surface users spend the most time in has no "you are here"
+- [ ] Reduce reordering cost. Moving slide 6 to position 2 is four clicks, four server actions and four `router.refresh()` calls
+- [ ] Consider duplicate-post and regenerate-whole-post. Neither exists
+
+---
+
+## Decisions needed
+
+Every item here is either banned by the spec, parked in the Backlog, or absent
+from the plan entirely. Each carries a recommendation. Nothing blocked on these
+is started until they are answered.
+
+### D1: drag to reorder vs the "no drag-and-drop" ban
+
+Spec section 23 excludes a "Complex drag-and-drop editor" from the MVP and
+section 13 says "The user should not need a full Canva-like editor."
+
+**Recommendation: build it, and read the ban narrowly.** The ban is on a
+free-positioning canvas where the user drags text boxes around a slide. That
+ban is correct and should stay. Dragging a thumbnail along a filmstrip to
+reorder slides is a different interaction: it is the same operation
+`moveSlideAction` already performs, and spec section 13 lists "Change slide
+order" as a required editor capability. The current implementation costs one
+click and one full page refresh per position. I would not treat a one-axis list
+reorder as the thing section 23 was protecting against.
+
+### D2: save a design as a reusable template
+
+Spec section 15, parked in the Backlog at `tasks.md:123`.
+
+**Recommendation: do it, after Round 4.** This is the mechanism by which
+"consistently good" becomes true over time rather than per post, and it is the
+concrete form of the spec's own promise that every post should feel like it
+came from the same account. It is also cheap now: `designConfig` and `PostSpec`
+already exist and the `template` table is already in the schema. The reason to
+wait for Round 4 is that the Brand Kit should tell the truth before users start
+saving looks derived from it.
+
+### D3: caption generation at the export moment
+
+Spec section 20, parked in the Backlog at `tasks.md:124`, and explicitly tied
+there to publishing, which is not being built.
+
+**Recommendation: do it, decoupled from publishing.** The Backlog entry bundles
+caption generation with Instagram publishing, and that bundling is what has kept
+it out of scope. The caption does not need publishing to be useful. Spec section
+34's secondary metric is the share of generated posts actually published, and
+the export moment is exactly where that number is won or lost: right now the
+user gets a zip and silence, then switches to a file browser, then to their
+phone, and writes the caption from scratch with the product's involvement
+already over. A caption in the completion panel is the cheapest thing on this
+whole list that moves that metric.
+
+### D4: streaming generation
+
+Not in `tasks.md` at all, in any phase or the Backlog.
+
+**Recommendation: do the stage reporting now, defer true streaming.** Round 5's
+stage reporting gets most of the perceived-speed benefit for very little work,
+because `generate-post.ts` already runs three discrete stages. True streaming of
+the first validated slide would turn a 20-second dead wait into roughly a
+6-second first paint, but it means restructuring `planDesign` and the
+persistence path, so it deserves its own decision rather than being smuggled in.
+
+### D5: password reset (needs email infrastructure)
+
+The sign-in decision at `tasks.md:117` settled on email and password only. That
+decision did not consider recovery, and there is no reset link anywhere in the
+app. A forgotten password is currently a dead end.
+
+**Recommendation: add it, and accept the new dependency.** This is not a design
+nicety, it is a total lockout with no path out, and it is the one bug on this
+list that can permanently cost a real user their account. Better Auth supports
+it directly, but it needs a transactional email provider (Resend is the obvious
+fit for this stack) plus one env var. That is genuinely new infrastructure, so
+it is your call, but shipping an email-and-password product with no reset is not
+a position I would defend.
+
+### D6: dark mode, wire it or delete it
+
+`globals.css:131-150` defines a complete dark palette and `globals.css:4`
+defines the variant. Nothing ever applies `.dark`. There is no ThemeProvider,
+no toggle, and no `prefers-color-scheme` block. `next-themes` is installed and
+imported only by the never-mounted Toaster.
+
+**Recommendation: wire it.** The tokens are already written and measured, the
+dependency is already installed, and the dark column actually scores better on
+contrast than the light one. Mounting a provider and a toggle is a small change
+against a palette that already exists. There is a real argument the other way:
+a user on a dark OS currently gets a white app whose default Brand Kit is
+`#0B0B0F`, which is jarring either way. But deleting working tokens to avoid a
+provider is the worse trade.
+
+### D7: landing page, redirect only or a real page
+
+The spec has no marketing surface. Nothing bans one.
+
+**Recommendation: redirect now, build the page separately.** The redirect is a
+two-line fix and should land today regardless. Whether Compose needs a real
+landing page is a product question about whether it is ever shown to anyone but
+you, and spec section 35 says the first user is the creator herself. If this
+stays personal, the redirect is the whole answer and a landing page is wasted
+work.
+
+### D8: does Compose get a visual identity of its own
+
+The app palette is chroma zero on every token except `--destructive`. There are
+no icons. The type scale is two effective steps.
+
+**Recommendation: neutral chrome, bold moments.** Keeping the working surfaces
+quiet is defensible and arguably correct, because the user's brand colors should
+be the only real color on screen. But "quiet" and "undesigned" are not the same
+thing, and right now the app is the second. The fix is precision within neutral:
+a real type scale, icons, deliberate spacing, and then genuine design investment
+at the three moments that carry the product, which are first run, the generation
+wait, and the export completion panel. That is where character belongs in an
+Operate-mode tool.
+
+---
+
+## Not doing, and why
+
+- **Analytics dashboard.** Spec section 21 says not to build one initially. The one metrics line at `dashboard/page.tsx:50` is the existing compromise and Round 10 only asks whether to keep or drop it. No change to the ban.
+- **Automatic illustration generation.** The `tasks.md:118` decision that generation is never automatic is correct and stays. Round 3.5 only asks the UI to disclose the cost, which is what `AGENTS.md` already says the rule is.
+- **Adding fonts.** The fixed font list is deliberate and correctly explained to the user at `brand-kit-form.tsx:155-157`. Round 9 changes the transport format only, never the list.
+- **Instagram publishing, scheduling, multi-platform, GitHub integration, content ideas, content memory.** Backlog, and none of them were implicated in any review finding.

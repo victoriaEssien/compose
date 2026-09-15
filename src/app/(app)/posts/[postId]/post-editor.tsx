@@ -1,9 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
 
 import { AssetPicker } from "@/components/asset-picker";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +38,7 @@ import {
   generateIllustrationAction,
   regenerateSlideAction,
   removeIllustrationAction,
+  restoreSlideAction,
   moveSlideAction,
   saveSlideAction,
 } from "./actions";
@@ -45,6 +57,19 @@ const regenerateLabels: Record<RegenerateAction, string> = {
   more_technical: "More technical",
   change_layout: "Change layout",
   another_design: "Another design",
+};
+
+/** Each action names itself, so one button's progress never labels another's. */
+const runningLabels: Record<string, string> = {
+  move: "Reordering...",
+  duplicate: "Duplicating...",
+  delete: "Deleting...",
+  restore: "Restoring...",
+  template: "Changing template...",
+  regenerate: "Regenerating...",
+  illustration: "Generating illustration...",
+  unillustrate: "Removing illustration...",
+  undo: "Undoing...",
 };
 
 const autosaveDelay = 900;
@@ -73,9 +98,12 @@ export function PostEditor({
   // land on a different slide than the one it was typed into.
   const [editing, setEditing] = useState<SlideDraft>(() => draftFor(slide));
   const [status, setStatus] = useState<string | null>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [instruction, setInstruction] = useState("");
   const [regenerateWith, setRegenerateWith] = useState<RegenerateAction>("rewrite");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [running, setRunning] = useState<string | null>(null);
   const [busy, startTransition] = useTransition();
 
   const draft = editing.content;
@@ -83,6 +111,12 @@ export function PostEditor({
 
   const fromServer = serverSignature(slide);
   const synced = useRef(fromServer);
+
+  // flushPending runs from event handlers, which cannot read render-scoped state.
+  const editingRef = useRef(editing);
+  editingRef.current = editing;
+  const slidesRef = useRef(slides);
+  slidesRef.current = slides;
 
   // Adopt server state only when it differs from what this editor last sent,
   // so a refresh mid-edit cannot overwrite what is being typed.
@@ -92,28 +126,57 @@ export function PostEditor({
     setEditing(draftFor(slide));
   }, [fromServer, slide, editing.id]);
 
+  /**
+   * Writes the draft now instead of waiting out the debounce. Anything that
+   * moves off the current slide, or reads it on the server, calls this first.
+   * Returns false when the write failed, which is the caller's cue to stay put
+   * rather than continue and lose the text.
+   */
+  const flushPending = useCallback(async () => {
+    const pending = editingRef.current;
+    const owner = slidesRef.current.find((row) => row.id === pending.id);
+    if (!owner || !shouldAutosave(pending, owner)) return true;
+
+    setStatus("Saving");
+    const result = await saveSlideAction(postId, pending.id, pending.content, pending.design);
+
+    if (!result.ok) {
+      setStatus("Not saved");
+      setSaveFailed(true);
+      setError(result.error);
+      return false;
+    }
+
+    synced.current = draftSignature(pending);
+    setSaveFailed(false);
+    setError(null);
+    setStatus("Saved");
+    return true;
+  }, [postId]);
+
   // Autosave: the draft is the truth while typing, the server catches up after a pause.
   useEffect(() => {
     if (!shouldAutosave(editing, slide)) return;
 
     const timer = setTimeout(async () => {
-      setStatus("Saving");
-      const result = await saveSlideAction(postId, editing.id, editing.content, editing.design);
-
-      if (!result.ok) {
-        setStatus(null);
-        setError(result.error);
-        return;
-      }
-
-      synced.current = draftSignature(editing);
-      setError(null);
-      setStatus("Saved");
-      router.refresh();
+      if (await flushPending()) router.refresh();
     }, autosaveDelay);
 
     return () => clearTimeout(timer);
-  }, [editing, postId, slide, router]);
+  }, [editing, slide, flushPending, router]);
+
+  // Closing the tab inside the debounce window would drop the last keystrokes.
+  const dirty = shouldAutosave(editing, slide);
+  useEffect(() => {
+    if (!dirty && !saveFailed) return;
+
+    function warn(event: BeforeUnloadEvent) {
+      event.preventDefault();
+    }
+
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty, saveFailed]);
 
   function setDraft(content: SlideSpec) {
     setEditing((current) => ({ ...current, content }));
@@ -123,14 +186,54 @@ export function PostEditor({
     setEditing((current) => ({ ...current, design }));
   }
 
-  function run(work: () => Promise<{ ok: boolean; error: string | null }>) {
+  function run(
+    label: string,
+    work: () => Promise<{ ok: boolean; error: string | null }>,
+    onDone?: () => void,
+  ) {
     startTransition(async () => {
-      const result = await work();
-      setError(result.error);
-      if (result.ok) {
-        setStatus(null);
-        router.refresh();
+      setRunning(label);
+
+      // Every action below reads the slide from the database. Without this the
+      // text still sitting in the debounce would be silently overwritten.
+      if (await flushPending()) {
+        const result = await work();
+        setError(result.error);
+        if (result.ok) {
+          onDone?.();
+          router.refresh();
+        }
       }
+
+      setRunning(null);
+    });
+  }
+
+  function retrySave() {
+    startTransition(async () => {
+      if (await flushPending()) router.refresh();
+    });
+  }
+
+  /** Undo for anything that replaced this slide's content: write the old copy back. */
+  function undoTo(slideId: string, previous: SlideDraft) {
+    return () =>
+      run("undo", () => saveSlideAction(postId, slideId, previous.content, previous.design));
+  }
+
+  function selectSlide(at: number) {
+    if (at === index) return;
+
+    const pending = editingRef.current;
+    const owner = slidesRef.current.find((row) => row.id === pending.id);
+    if (!owner || !shouldAutosave(pending, owner)) {
+      setActive(at);
+      return;
+    }
+
+    // Dirty, so the switch waits on the write and is abandoned if it fails.
+    startTransition(async () => {
+      if (await flushPending()) setActive(at);
     });
   }
 
@@ -139,8 +242,66 @@ export function PostEditor({
     const target = index + direction;
     if (target < 0 || target >= slides.length) return;
 
-    setActive(target);
-    run(() => moveSlideAction(postId, slide.id, direction));
+    run(
+      "move",
+      () => moveSlideAction(postId, slide.id, direction),
+      () => setActive(target),
+    );
+  }
+
+  function changeTemplate(value: TemplateKind) {
+    const previous = editingRef.current;
+
+    run(
+      "template",
+      () => changeTemplateAction(postId, slide.id, value),
+      () => {
+        toast(`Template changed to ${templateNames[value]}.`, {
+          description: "Fields that do not exist on the new template were dropped.",
+          action: { label: "Undo", onClick: undoTo(previous.id, previous) },
+        });
+      },
+    );
+  }
+
+  function deleteSlide() {
+    const snapshot = editingRef.current;
+    const at = index;
+    const imageUrl = slide.imageUrl;
+
+    setConfirmingDelete(false);
+    run(
+      "delete",
+      () => deleteSlideAction(postId, slide.id),
+      () => {
+        setActive(Math.max(0, at - 1));
+        toast(`Slide ${at + 1} deleted.`, {
+          action: {
+            label: "Undo",
+            onClick: () =>
+              run(
+                "restore",
+                () => restoreSlideAction(postId, at, snapshot.content, snapshot.design, imageUrl),
+                () => setActive(at),
+              ),
+          },
+        });
+      },
+    );
+  }
+
+  function regenerate() {
+    const previous = editingRef.current;
+
+    run(
+      "regenerate",
+      () => regenerateSlideAction(postId, slide.id, regenerateWith, instruction || null),
+      () => {
+        toast("Slide rewritten.", {
+          action: { label: "Undo", onClick: undoTo(previous.id, previous) },
+        });
+      },
+    );
   }
 
   const canTakeAsset = draft.template === "screenshot" || draft.template === "project";
@@ -159,7 +320,7 @@ export function PostEditor({
             <button
               key={row.id}
               type="button"
-              onClick={() => setActive(at)}
+              onClick={() => selectSlide(at)}
               aria-label={`Slide ${at + 1}`}
               aria-current={at === index ? "true" : undefined}
               className={cn(
@@ -180,7 +341,7 @@ export function PostEditor({
             size="icon"
             aria-label="View the previous slide"
             disabled={index === 0}
-            onClick={() => setActive(index - 1)}
+            onClick={() => selectSlide(index - 1)}
           >
             &larr;
           </Button>
@@ -196,7 +357,7 @@ export function PostEditor({
             size="icon"
             aria-label="View the next slide"
             disabled={index === slides.length - 1}
-            onClick={() => setActive(index + 1)}
+            onClick={() => selectSlide(index + 1)}
           >
             &rarr;
           </Button>
@@ -225,15 +386,15 @@ export function PostEditor({
             variant="outline"
             size="sm"
             disabled={busy}
-            onClick={() => run(() => duplicateSlideAction(postId, slide.id))}
+            onClick={() => run("duplicate", () => duplicateSlideAction(postId, slide.id))}
           >
             Duplicate
           </Button>
           <Button
-            variant="outline"
+            variant="destructive"
             size="sm"
             disabled={busy || slides.length === 1}
-            onClick={() => run(() => deleteSlideAction(postId, slide.id))}
+            onClick={() => setConfirmingDelete(true)}
           >
             Delete
           </Button>
@@ -248,24 +409,33 @@ export function PostEditor({
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-sm font-medium">Slide {index + 1}</h2>
-          <span aria-live="polite" className="text-muted-foreground text-xs">
-            {busy ? "Working" : (status ?? "")}
+          <span
+            aria-live="polite"
+            className={cn("text-xs", saveFailed ? "text-destructive" : "text-muted-foreground")}
+          >
+            {running ? (runningLabels[running] ?? "Working...") : (status ?? "")}
           </span>
         </div>
 
         {error && (
-          <p role="alert" className="text-destructive text-sm">
-            {error}
-          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <p role="alert" className="text-destructive text-sm">
+              {error}
+            </p>
+            {saveFailed && (
+              <Button variant="outline" size="sm" disabled={busy} onClick={retrySave}>
+                Try saving again
+              </Button>
+            )}
+          </div>
         )}
 
         <div className="grid gap-1.5">
           <Label htmlFor="template">Template</Label>
           <Select
             value={draft.template}
-            onValueChange={(value) =>
-              run(() => changeTemplateAction(postId, slide.id, value as TemplateKind))
-            }
+            disabled={busy}
+            onValueChange={(value) => changeTemplate(value as TemplateKind)}
           >
             <SelectTrigger id="template" className="w-full">
               <SelectValue />
@@ -297,9 +467,11 @@ export function PostEditor({
               variant="outline"
               size="sm"
               disabled={busy || !draft.visual}
-              onClick={() => run(() => generateIllustrationAction(postId, slide.id))}
+              onClick={() =>
+                run("illustration", () => generateIllustrationAction(postId, slide.id))
+              }
             >
-              {busy ? "Working..." : "Generate illustration"}
+              {running === "illustration" ? "Generating..." : "Generate illustration"}
             </Button>
             {slide.imageUrl && (
               <Button
@@ -307,7 +479,9 @@ export function PostEditor({
                 variant="ghost"
                 size="sm"
                 disabled={busy}
-                onClick={() => run(() => removeIllustrationAction(postId, slide.id))}
+                onClick={() =>
+                  run("unillustrate", () => removeIllustrationAction(postId, slide.id))
+                }
               >
                 Remove illustration
               </Button>
@@ -353,7 +527,7 @@ export function PostEditor({
             value={regenerateWith}
             onValueChange={(value) => setRegenerateWith(value as RegenerateAction)}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger id="regenerateWith" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -366,28 +540,39 @@ export function PostEditor({
           </Select>
 
           <Input
+            aria-label="Extra regeneration instruction"
             value={instruction}
             placeholder="Optional. Make this slide less wordy."
             onChange={(event) => setInstruction(event.target.value)}
           />
 
-          <Button
-            type="button"
-            disabled={busy}
-            onClick={() =>
-              run(() =>
-                regenerateSlideAction(postId, slide.id, regenerateWith, instruction || null),
-              )
-            }
-          >
-            {busy ? "Regenerating..." : "Regenerate"}
+          <Button type="button" disabled={busy} onClick={regenerate}>
+            {running === "regenerate" ? "Regenerating..." : "Regenerate"}
           </Button>
 
           <p className="text-muted-foreground text-xs">
-            Only this slide changes. The rest of the post stays as it is.
+            This replaces the text on this slide. The rest of the post stays as it is, and you can
+            undo it.
           </p>
         </div>
       </div>
+
+      <AlertDialog open={confirmingDelete} onOpenChange={setConfirmingDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete slide {index + 1}, the {templateNames[draft.template].toLowerCase()} slide?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              The post drops to {slides.length - 1} slides. You can undo this straight after.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteSlide}>Delete slide</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

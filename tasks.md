@@ -109,6 +109,31 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 - [x] Deploy to Vercel, set env vars, run migrations. Migrations apply automatically through `pnpm vercel-build`
 - [x] Dogfood: create 3 real carousels end to end in under 5 minutes each
 
+## Phase 9: UI/UX review round 1
+
+A full `/impeccable critique` of the signed-in app scored it **20/40** on
+Nielsen's heuristics with cognitive load HIGH, 3 P0 issues and 2 P1 issues. The
+remediation plan lives in [`review-round1.md`](review-round1.md), split into 11
+rounds plus 8 decisions that need an answer before their work starts.
+
+Note on Phase 8 above: "Responsive pass and accessibility pass" is ticked and
+that work was real (every form field is labelled, there are zero raw `<img>`
+tags, 12 of 14 server actions have pending state). It stopped before contrast,
+focus rings, touch targets, motion and error association, and the editor still
+overflows at 390px. Rounds 7 and 8 of `review-round1.md` finish it.
+
+- [x] Round 1: stop losing user work (autosave flush, confirmations, undo)
+- [ ] Round 2: the front door (landing redirect, `@yourhandle` in exports, first run)
+- [ ] Round 3: show the work (thumbnails, filmstrip, template grid, export completion)
+- [ ] Round 4: the Brand Kit (real preview, starter palettes, contrast check)
+- [ ] Round 5: the generation wait (stage reporting, skeleton, cancel)
+- [ ] Round 6: states and error routes (`error.tsx`, `loading.tsx`, `not-found.tsx`)
+- [ ] Round 7: accessibility (contrast tokens, error association, targets, motion)
+- [ ] Round 8: responsive (390px editor overflow, mobile nav, `md:` step)
+- [ ] Round 9: performance (refresh storm, woff2 subsets, throttling)
+- [ ] Round 10: consistency, copy and hierarchy
+- [ ] Round 11: editor efficiency (keyboard nav, format persistence, breadcrumb)
+
 ---
 
 ## Decisions to confirm

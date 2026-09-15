@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AppNav } from "@/components/app-nav";
 import { SignOutButton } from "@/components/sign-out-button";
+import { Toaster } from "@/components/ui/sonner";
 import { requireUserId } from "@/server/auth";
 
 /** Guards every signed-in page. */
@@ -22,6 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </header>
       {children}
+      <Toaster />
     </div>
   );
 }
