@@ -16,7 +16,7 @@ const system = [
   "Rules:",
   "- Slide 1 uses cover. When there is more than one slide, the last uses final.",
   "- slideCount must equal the number of slides.",
-  "- Stay well under every character limit. Short text reads better at 1080x1350.",
+  "- Treat every length as a target, not a hard stop. Short text reads better at 1080x1350, and going a long way over shrinks the slide's type to fit.",
   "- One idea per slide. If a slide needs two sentences to make sense, split it.",
   "- Every field except code is a single paragraph. No line breaks, no bullet characters, no 1. or - prefixes.",
   "- When the content wants a list, use numbered_list. Never pack a list into a body field.",

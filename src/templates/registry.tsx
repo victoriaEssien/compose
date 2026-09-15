@@ -26,6 +26,7 @@ import {
   ScreenshotSlide,
   TextSlide,
 } from "./slides";
+import { templateNames } from "./names";
 import type { SlideRenderContext } from "./types";
 
 export type TemplateDefinition<K extends TemplateKind> = {
@@ -40,63 +41,63 @@ export type TemplateDefinition<K extends TemplateKind> = {
 export const templates = {
   cover: {
     id: "cover",
-    name: "Cover",
+    name: templateNames.cover,
     schema: coverSlideSchema,
     textLimit: slideTextLimits.headline,
     render: CoverSlide,
   },
   text: {
     id: "text",
-    name: "Text",
+    name: templateNames.text,
     schema: textSlideSchema,
     textLimit: slideTextLimits.body,
     render: TextSlide,
   },
   numbered_list: {
     id: "numbered_list",
-    name: "Numbered list",
+    name: templateNames.numbered_list,
     schema: numberedListSlideSchema,
     textLimit: slideTextLimits.itemBody,
     render: NumberedListSlide,
   },
   code: {
     id: "code",
-    name: "Code",
+    name: templateNames.code,
     schema: codeSlideSchema,
     textLimit: slideTextLimits.code,
     render: CodeSlide,
   },
   comparison: {
     id: "comparison",
-    name: "Comparison",
+    name: templateNames.comparison,
     schema: comparisonSlideSchema,
     textLimit: slideTextLimits.comparisonBody,
     render: ComparisonSlide,
   },
   quote: {
     id: "quote",
-    name: "Quote",
+    name: templateNames.quote,
     schema: quoteSlideSchema,
     textLimit: slideTextLimits.quote,
     render: QuoteSlide,
   },
   screenshot: {
     id: "screenshot",
-    name: "Screenshot",
+    name: templateNames.screenshot,
     schema: screenshotSlideSchema,
     textLimit: slideTextLimits.caption,
     render: ScreenshotSlide,
   },
   project: {
     id: "project",
-    name: "Project",
+    name: templateNames.project,
     schema: projectSlideSchema,
     textLimit: slideTextLimits.projectDescription,
     render: ProjectSlide,
   },
   final: {
     id: "final",
-    name: "Final slide",
+    name: templateNames.final,
     schema: finalSlideSchema,
     textLimit: slideTextLimits.finalBody,
     render: FinalSlide,

@@ -44,6 +44,27 @@ What Satori accepts, and what it does not:
   `@font-face`. Adding a family means adding its TTF there.
 - Syntax highlighting is pre-tokenised by Shiki on the server
   (`src/server/render/highlight.ts`), because Satori cannot await anything.
+- `<text>` inside an `<svg>` throws. Labels on a diagram have to be DOM spans.
+
+## Fitting text
+
+Character counts do not predict whether copy fits: in Inter a lowercase `i` is
+0.24em and a capital `W` is 0.99em. So the renderer measures real glyph advances
+and shrinks the type until it fits, instead of the schema rejecting long copy.
+
+- `src/templates/font-metrics.ts` is generated. Run `pnpm font-metrics` after
+  changing anything in `public/fonts/`, never edit it by hand.
+- `measure.ts` is pure and has no filesystem access, so it stays usable from the
+  templates. Keep it that way.
+- `fit.ts` describes each template's text as blocks. The roles there mirror what
+  the primitives actually draw, so a change to `Heading`, `Body` or a template's
+  gaps has to be matched in the blocks or the fit is measured against the wrong
+  shape. `measure.render.test.tsx` checks the prediction against real renders.
+- `slideTextLimits` are targets the prompts quote. The schema enforces
+  `slideTextCeilings`, which is 1.6x that. Over the target costs smaller type,
+  over the ceiling is rejected.
+- The editor imports template names from `src/templates/names.ts`, not the
+  registry, so the metrics table does not ship to the browser.
 
 The `visual` hint resolves in two steps. `resolveIcon()` (`src/templates/icons.ts`)
 maps it onto a bundled icon: free, instant and exactly on-brand. When nothing

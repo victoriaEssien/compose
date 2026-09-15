@@ -12,6 +12,9 @@ export const formatSizes: Record<SlideFormat, { width: number; height: number }>
 
 export type SlideTheme = ReturnType<typeof slideTheme>;
 
+/** The avatar row Frame pins to the bottom, plus air so text never kisses it. */
+const footerHeight = 44 + 48;
+
 function withAlpha(hex: string, alpha: number) {
   const value = Math.round(alpha * 255)
     .toString(16)
@@ -43,10 +46,17 @@ export function slideTheme(
     glass: { background: withAlpha(text, 0.08), border: `1px solid ${withAlpha(text, 0.22)}` },
   } as const;
 
+  const padding = 80;
+
   return {
     format,
     ...formatSizes[format],
-    padding: 80,
+    padding,
+    /** What a template may fill: the frame less its padding and the footer row. */
+    content: {
+      width: formatSizes[format].width - padding * 2,
+      height: formatSizes[format].height - padding * 2 - footerHeight,
+    },
     colors: { background, text, accent, muted, faint: withAlpha(text, 0.45) },
     fonts: { primary: brand.fonts.primary, secondary: brand.fonts.secondary },
     radius: brand.style.radius,

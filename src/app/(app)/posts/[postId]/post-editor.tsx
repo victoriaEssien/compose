@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { AssetRow } from "@/server/db/schema";
-import { resolveIcon, templateList } from "@/templates";
+import { resolveIcon } from "@/templates/icons";
+import { templateNames } from "@/templates/names";
 import { regenerateActions, templateKinds } from "@/types/slide";
 import type { RegenerateAction, SlideDesignConfig, SlideSpec, TemplateKind } from "@/types/slide";
 import {
@@ -272,7 +273,7 @@ export function PostEditor({
             <SelectContent>
               {templateKinds.map((kind) => (
                 <SelectItem key={kind} value={kind}>
-                  {templateList.find((entry) => entry.id === kind)?.name ?? kind}
+                  {templateNames[kind]}
                 </SelectItem>
               ))}
             </SelectContent>

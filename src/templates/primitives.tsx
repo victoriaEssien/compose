@@ -116,16 +116,19 @@ export function Eyebrow({ theme, children }: { theme: SlideTheme; children: Reac
 export function Heading({
   theme,
   size = "heading",
+  fontSize,
   children,
 }: {
   theme: SlideTheme;
   size?: "display" | "heading";
+  /** A fitted size from fit.ts. Falls back to what the Brand Kit asks for. */
+  fontSize?: number;
   children: ReactNode;
 }) {
   return (
     <span
       style={{
-        fontSize: size === "display" ? theme.type.display : theme.type.heading,
+        fontSize: fontSize ?? (size === "display" ? theme.type.display : theme.type.heading),
         fontWeight: 700,
         lineHeight: 1.08,
         letterSpacing: -1,
@@ -139,16 +142,18 @@ export function Heading({
 export function Body({
   theme,
   color,
+  fontSize,
   children,
 }: {
   theme: SlideTheme;
   color?: string;
+  fontSize?: number;
   children: ReactNode;
 }) {
   return (
     <span
       style={{
-        fontSize: theme.type.body,
+        fontSize: fontSize ?? theme.type.body,
         lineHeight: 1.45,
         fontFamily: theme.fonts.secondary,
         color: color ?? theme.colors.muted,
@@ -191,15 +196,10 @@ const codePalettes = {
   terminal: { background: "#000000", border: "none", text: "#E6EDF3" },
 } as const;
 
-export function CodeBlock({
-  theme,
-  lines,
-  raw,
-}: {
-  theme: SlideTheme;
-  lines: CodeLine[] | null;
-  raw: string;
-}) {
+const codePadding = 32;
+const codeLineHeight = 1.5;
+
+function codeLayout(lines: CodeLine[] | null, raw: string, theme: SlideTheme) {
   const palette = codePalettes[theme.codeBlock];
   const content = lines ?? raw.split("\n").map((text) => [{ text, color: palette.text }]);
 
@@ -211,7 +211,27 @@ export function CodeBlock({
       ),
     0,
   );
-  const fontSize = fitCodeFontSize(longestLine, theme);
+
+  return { palette, content, fontSize: fitCodeFontSize(longestLine, theme) };
+}
+
+/** What CodeBlock will occupy, so the prose around it can be fitted to the rest. */
+export function codeBlockHeight(raw: string, lines: CodeLine[] | null, theme: SlideTheme) {
+  const { content, fontSize } = codeLayout(lines, raw, theme);
+
+  return codePadding * 2 + content.length * fontSize * codeLineHeight;
+}
+
+export function CodeBlock({
+  theme,
+  lines,
+  raw,
+}: {
+  theme: SlideTheme;
+  lines: CodeLine[] | null;
+  raw: string;
+}) {
+  const { palette, content, fontSize } = codeLayout(lines, raw, theme);
 
   return (
     <div
@@ -219,14 +239,14 @@ export function CodeBlock({
         display: "flex",
         flexDirection: "column",
         width: "100%",
-        padding: 32,
+        padding: codePadding,
         borderRadius: theme.radius,
         backgroundColor: palette.background,
         border:
           theme.codeBlock === "terminal" ? `1px solid ${theme.colors.accent}` : palette.border,
         fontFamily: "JetBrains Mono",
         fontSize,
-        lineHeight: 1.5,
+        lineHeight: codeLineHeight,
       }}
     >
       {content.map((line, lineIndex) => (

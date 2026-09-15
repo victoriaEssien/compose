@@ -21,7 +21,7 @@ export const templateKinds = [
 export const templateKindSchema = z.enum(templateKinds);
 export type TemplateKind = z.infer<typeof templateKindSchema>;
 
-/** One source for the budgets, so prompts can quote what the schema enforces (spec section 9). */
+/** Target lengths the prompts quote. The schema enforces slideTextCeilings (spec section 9). */
 export const slideTextLimits = {
   headline: 70,
   heading: 60,
@@ -46,12 +46,21 @@ export const slideTextLimits = {
 
 export const maxListItems = 5;
 
+// Headroom over the target, because the renderer shrinks type to fit. Models
+// cannot count characters, and that failed three generations before it measured.
+const ceiling = (target: number) => Math.round(target * 1.6);
+
+/** What the schema will actually accept, as opposed to what the prompts ask for. */
+export const slideTextCeilings = Object.fromEntries(
+  Object.entries(slideTextLimits).map(([field, target]) => [field, ceiling(target)]),
+) as Record<keyof typeof slideTextLimits, number>;
+
 // Layout belongs to the renderer, so copy cannot smuggle it in as line breaks.
 // Code is the one field where newlines are the content.
-const line = (max: number) =>
+const line = (target: number) =>
   z
     .string()
-    .max(max)
+    .max(ceiling(target))
     .refine((value) => !/[\r\n]/.test(value), {
       message: "must be one paragraph, with no line breaks",
     });

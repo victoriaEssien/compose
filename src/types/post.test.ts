@@ -7,7 +7,7 @@ import {
   postTypeRequestSchema,
   postTypeSchema,
 } from "./post";
-import { slideSpecSchema, slideTextLimits, templateKinds } from "./slide";
+import { slideSpecSchema, slideTextCeilings, slideTextLimits, templateKinds } from "./slide";
 import type { SlideSpec, SlideSpecOf, TemplateKind } from "./slide";
 
 const coverSlide: SlideSpec = {
@@ -145,8 +145,18 @@ describe("postSpecSchema", () => {
     expect(result.error?.issues[0]?.path).toEqual(["title"]);
   });
 
-  it("rejects text that would overflow the layout", () => {
+  // The renderer measures and shrinks, so running over the target costs a smaller
+  // headline rather than the whole post.
+  it("accepts copy that runs past the target it was asked for", () => {
     const headline = "a".repeat(slideTextLimits.headline + 1);
+
+    const result = postSpecSchema.safeParse(postSpec([{ ...coverSlide, headline }]));
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects copy past the point the layout can absorb", () => {
+    const headline = "a".repeat(slideTextCeilings.headline + 1);
 
     const result = postSpecSchema.safeParse(postSpec([{ ...coverSlide, headline }]));
 

@@ -4,7 +4,7 @@ import { defaultBrandKit } from "@/types/brand";
 import type { GeneratePostInput } from "@/types/post";
 import { structurePrompt } from "./prompts/structure.v1";
 import type { AiProvider, JsonRequest } from "./provider";
-import { maxSupportingPoints, structureLimits } from "./schemas";
+import { maxSupportingPoints, structureCeilings, structureLimits } from "./schemas";
 import type { ContentAnalysis } from "./schemas";
 import { structureContent } from "./structurer";
 
@@ -82,7 +82,7 @@ describe("structureContent", () => {
 
     const result = await structureContent(provider, input, analysis, defaultBrandKit);
 
-    expect(result.cta.length).toBeLessThanOrEqual(structureLimits.cta);
+    expect(result.cta.length).toBeLessThanOrEqual(structureCeilings.cta);
     expect(calls).toHaveLength(1);
   });
 
