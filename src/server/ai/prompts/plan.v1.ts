@@ -45,7 +45,7 @@ export const planPrompt = {
       "",
       "Structure:",
       `- Hook: ${structure.hook}`,
-      `- Body: ${structure.body}`,
+      ...(structure.body ? [`- Body: ${structure.body}`] : []),
       "- Supporting points:",
       ...structure.supportingPoints.map((point) => `  - ${point.title}: ${point.detail}`),
       `- Conclusion: ${structure.conclusion}`,

@@ -4,6 +4,18 @@ import { z } from "zod";
 
 import { maxSlides, postTypeSchema } from "@/types/post";
 
+/** One source for the budgets, so the prompt can quote what the schema enforces. */
+export const structureLimits = {
+  hook: 120,
+  body: 600,
+  pointTitle: 60,
+  pointDetail: 280,
+  conclusion: 300,
+  cta: 80,
+} as const;
+
+export const maxSupportingPoints = 6;
+
 export const contentAnalysisSchema = z.object({
   topic: z.string().min(1).max(120),
   audience: z.string().min(1).max(120),
@@ -14,19 +26,23 @@ export const contentAnalysisSchema = z.object({
 });
 
 export const contentStructureSchema = z.object({
-  hook: z.string().min(1).max(120),
-  body: z.string().min(1).max(1200),
+  hook: z.string().min(1).max(structureLimits.hook),
+  /**
+   * Nullable because the planner also receives the points, the conclusion and the
+   * original content. An empty answer should not fail a whole post.
+   */
+  body: z.string().max(structureLimits.body).nullable(),
   supportingPoints: z
     .array(
       z.object({
-        title: z.string().min(1).max(60),
-        detail: z.string().min(1).max(280),
+        title: z.string().min(1).max(structureLimits.pointTitle),
+        detail: z.string().min(1).max(structureLimits.pointDetail),
       }),
     )
     .min(1)
-    .max(6),
-  conclusion: z.string().min(1).max(300),
-  cta: z.string().min(1).max(80),
+    .max(maxSupportingPoints),
+  conclusion: z.string().min(1).max(structureLimits.conclusion),
+  cta: z.string().min(1).max(structureLimits.cta),
 });
 
 export type ContentAnalysis = z.infer<typeof contentAnalysisSchema>;
