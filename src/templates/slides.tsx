@@ -74,7 +74,7 @@ export function NumberedListSlide(context: SlideRenderContext<"numbered_list">) 
         {slide.heading && <Heading theme={theme}>{slide.heading}</Heading>}
         <Stack gap={28}>
           {slide.items.map((item, position) => (
-            <div key={item.title} style={{ display: "flex", width: "100%" }}>
+            <div key={position} style={{ display: "flex", width: "100%" }}>
               <span
                 style={{
                   minWidth: 104,
@@ -131,7 +131,7 @@ export function ComparisonSlide(context: SlideRenderContext<"comparison">) {
         {slide.heading && <Heading theme={theme}>{slide.heading}</Heading>}
         <div style={{ display: "flex", gap: 24, width: "100%" }}>
           {[slide.left, slide.right].map((side, position) => (
-            <Surface key={side.label} theme={theme} style={{ flex: 1, gap: 16 }}>
+            <Surface key={position} theme={theme} style={{ flex: 1, gap: 16 }}>
               <span
                 style={{
                   fontSize: theme.type.eyebrow,

@@ -107,7 +107,7 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 - [x] Track generated vs exported posts (spec section 34 secondary metric)
 - [x] Responsive pass and accessibility pass
 - [x] Deploy to Vercel, set env vars, run migrations. Migrations apply automatically through `pnpm vercel-build`
-- [ ] Dogfood: create 3 real carousels end to end in under 5 minutes each
+- [x] Dogfood: create 3 real carousels end to end in under 5 minutes each
 
 ---
 
