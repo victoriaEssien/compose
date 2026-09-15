@@ -33,13 +33,13 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 
 ## Phase 2: Authentication
 
-- [ ] Better Auth server config (`src/server/auth.ts`) with the Drizzle adapter
-- [ ] Generate Better Auth tables (`pnpm dlx @better-auth/cli generate`) into the schema; migrate
-- [ ] Route handler at `src/app/api/auth/[...all]/route.ts`
-- [ ] Client helper (`src/lib/auth-client.ts`)
-- [ ] Sign-in page (decide: email/password, GitHub OAuth, or both)
-- [ ] Protect `(app)` routes (middleware or layout guard) and add a `currentUserId()` helper
-- [ ] Sign-out
+- [x] Better Auth server config (`src/server/auth.ts`) with the Drizzle adapter
+- [x] Better Auth tables (`user`, `session`, `account`, `verification`) in the schema; migrate. `@better-auth/cli` is deprecated and pinned to 1.4.x, so they were derived from `getAuthTables()` in the installed better-auth instead
+- [x] Route handler at `src/app/api/auth/[...all]/route.ts`
+- [x] Client helper (`src/lib/auth-client.ts`)
+- [x] Sign-in page: email and password, with a Create account tab
+- [x] Protect `(app)` routes (layout guard in `(app)/layout.tsx`) and add `currentUserId()` / `requireUserId()`
+- [x] Sign-out
 
 ## Phase 3: App shell, Dashboard, Brand Kit, Assets
 
@@ -114,7 +114,7 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 ## Decisions to confirm
 
 - [ ] **Renderer.** Proposed: `next/og` (`ImageResponse`, built on Satori) with templates written as JSX + inline styles. No extra dependency, runs on Vercel. Limits: flexbox-only layout, subset of CSS, fonts must be loaded as TTF/OTF, code highlighting must be pre-tokenised. Alternative: headless Chromium screenshots (full CSS, heavier, harder on Vercel).
-- [ ] **Sign-in methods** for Better Auth (email/password, GitHub, magic link).
+- [x] **Sign-in methods** for Better Auth. Decided: email and password only. No OAuth app to register and Better Auth keeps users in our own Postgres. GitHub or magic links can be added later without a migration.
 - [ ] **Image generation** model and where it's allowed (illustrations, backgrounds, avatars only; never text).
 - [ ] **Code highlighting** library for the Code template (e.g. Shiki, tokens rendered as spans).
 

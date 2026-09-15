@@ -1,8 +1,14 @@
-export default function Page() {
+import { redirect } from "next/navigation";
+
+import { currentUserId } from "@/server/auth";
+import { SignInForm } from "./sign-in-form";
+
+export default async function Page() {
+  if (await currentUserId()) redirect("/dashboard");
+
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
-      <h1 className="text-2xl font-semibold">Sign in</h1>
-      <p className="text-muted-foreground mt-2">Placeholder. See tasks.md, Phase 2.</p>
+    <main className="flex min-h-dvh items-center justify-center px-6 py-10">
+      <SignInForm />
     </main>
   );
 }
