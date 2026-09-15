@@ -134,7 +134,7 @@ export default async function Page() {
             href="/brand"
             className="hover:border-foreground/20 mt-3 flex items-center gap-4 rounded-lg border p-4 transition-colors"
           >
-            <div className="flex gap-1.5">
+            <div aria-hidden="true" className="flex gap-1.5">
               {[brandKit.colors.background, brandKit.colors.text, brandKit.colors.accent].map(
                 (color) => (
                   <span

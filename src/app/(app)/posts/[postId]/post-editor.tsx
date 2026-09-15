@@ -591,8 +591,11 @@ export function PostEditor({
         </details>
 
         <div className="grid gap-3 rounded-lg border p-4">
-          <p className="text-sm font-medium">Regenerate this slide</p>
+          <h3 className="text-sm font-medium">Regenerate this slide</h3>
 
+          <Label htmlFor="regenerateWith" className="sr-only">
+            What to change
+          </Label>
           <Select
             value={regenerateWith}
             onValueChange={(value) => setRegenerateWith(value as RegenerateAction)}

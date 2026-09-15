@@ -25,14 +25,22 @@ function Field({
   onChange: (value: string) => void;
 }) {
   const id = label.toLowerCase().replaceAll(" ", "-");
+  const countId = `${id}-count`;
   const over = value.length > max;
 
   return (
     <div className="grid gap-1.5">
-      <div className="flex items-baseline justify-between">
+      <div className="flex items-baseline justify-between gap-2">
         <Label htmlFor={id}>{label}</Label>
-        <span className={over ? "text-destructive text-xs" : "text-muted-foreground text-xs"}>
-          {value.length}/{max}
+        {/*
+          The count used to change colour and nothing else, so being over the
+          limit was conveyed by colour alone. Now the wording changes too.
+        */}
+        <span
+          id={countId}
+          className={over ? "text-destructive text-xs" : "text-muted-foreground text-xs"}
+        >
+          {over ? `${value.length - max} over` : `${value.length}/${max}`}
         </span>
       </div>
       {rows ? (
@@ -40,11 +48,19 @@ function Field({
           id={id}
           rows={rows}
           value={value}
+          aria-invalid={over || undefined}
+          aria-describedby={countId}
           onChange={(event) => onChange(event.target.value)}
           className={mono ? "font-mono text-xs" : undefined}
         />
       ) : (
-        <Input id={id} value={value} onChange={(event) => onChange(event.target.value)} />
+        <Input
+          id={id}
+          value={value}
+          aria-invalid={over || undefined}
+          aria-describedby={countId}
+          onChange={(event) => onChange(event.target.value)}
+        />
       )}
     </div>
   );

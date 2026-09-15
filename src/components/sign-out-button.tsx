@@ -19,7 +19,7 @@ export function SignOutButton() {
 
   return (
     <Button variant="ghost" size="sm" disabled={pending} onClick={onClick}>
-      {pending ? "Signing out..." : "Sign out"}
+      <span aria-live="polite">{pending ? "Signing out..." : "Sign out"}</span>
     </Button>
   );
 }

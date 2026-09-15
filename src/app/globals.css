@@ -124,13 +124,20 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  /* 5.10:1 on white. The generated 0.556 was 4.73:1, and it carries real
+     information at 12px in a dozen places. */
+  --muted-foreground: #6e6e6e;
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  /* Decorative container edges. Not a UI component boundary, so 3:1 does not
+     apply, but the generated 0.922 was nearly invisible. */
+  --border: #dcdcdc;
+  /* The edge of an input, select or textarea, which WCAG 1.4.11 does cover.
+     3.03:1 on white; the generated value was 1.26:1. */
+  --input: #949494;
+  /* 5.33:1, and used at full opacity so the composite is the real ratio. */
+  --ring: #6b6b6b;
 }
 
 .dark {
@@ -149,16 +156,34 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  /* 1.91:1, decorative. */
+  --border: oklch(1 0 0 / 22%);
+  /* 3.77:1 over the page, 3.84:1 over a card. Was 1.47:1. */
+  --input: oklch(1 0 0 / 40%);
+  /* 7.66:1. Was 4.18:1, which passed, but the ring should be unmistakable. */
+  --ring: oklch(0.708 0 0);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/*
+ * Dialogs, selects and dropdowns all animate in and out unconditionally. Honour
+ * the OS setting rather than making someone motion-sensitive sit through it.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

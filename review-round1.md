@@ -351,31 +351,63 @@ association.
 
 ### 7.1 Contrast (measured, not estimated)
 
-- [ ] `border` and `input` vs background: **1.26:1**, needs 3:1. This is the boundary of every Input, Textarea, SelectTrigger and bordered container in the app (`globals.css`)
-- [ ] `ring` vs background in light mode: **2.59:1**, needs 3:1. Affects the two hand-rolled focus rings at `app-nav.tsx:29` and `post-editor.tsx:166`; the shadcn primitives use `ring-ring/50` which composites to roughly 1.7:1 over white
-- [ ] `muted-foreground` vs background: **4.73:1**, passing by 0.23, and it carries real information at 12px in 14 places. Darken it
-- [ ] `muted-foreground` vs `muted`: **4.34:1**, failing. Latent today because no text sits on `bg-muted`, but fix the token
+**Status: done**, together with [D6](#d6-dark-mode-wire-it-or-delete-it).
+`pnpm typecheck`, `pnpm lint`, `pnpm test` (240 passing) and `pnpm build` all
+green.
+
+- [x] `border` and `input` vs background: **1.26:1**, needs 3:1. This is the boundary of every Input, Textarea, SelectTrigger and bordered container in the app (`globals.css`)
+- [x] `ring` vs background in light mode: **2.59:1**, needs 3:1. Affects the two hand-rolled focus rings at `app-nav.tsx:29` and `post-editor.tsx:166`; the shadcn primitives use `ring-ring/50` which composites to roughly 1.7:1 over white
+- [x] `muted-foreground` vs background: **4.73:1**, passing by 0.23, and it carries real information at 12px in 14 places. Darken it
+- [x] `muted-foreground` vs `muted`: **4.34:1**, failing. Latent today because no text sits on `bg-muted`, but fix the token
+
+`border` and `input` were one token doing two jobs, which is why the number was
+indefensible. They are now separate. `--input` is the edge of a control, which
+WCAG 1.4.11 covers, and hits **3.03:1** light and **3.77:1** dark. `--border` is
+a decorative container edge that 1.4.11 does not cover, so it only got dark
+enough to see: **1.37:1** light, **1.91:1** dark. Calling that a pass would be
+wrong, and making every card edge mid-grey would be a real design cost for no
+accessibility gain.
+
+`--ring` is **5.33:1** light and **7.66:1** dark, and the five primitives that
+used `ring-ring/50` now use full opacity, because the composite was the real
+ratio and it was about 1.7:1. `--muted-foreground` is **5.10:1** on background
+and **4.68:1** on muted.
+
+Every number above is computed with `src/lib/contrast.ts`, the same function the
+Brand Kit warning uses.
 
 ### 7.2 Errors and state
 
-- [ ] Set `aria-invalid` and `aria-describedby` on over-limit fields. Neither attribute is set at a single call site in the codebase (`create-post-form.tsx:86,95,155`, `slide-fields.tsx:34,39,47`). **Partly done in Round 2**: `create-post-form` and the new reset-password form carry both. `slide-fields` still does not
-- [ ] Stop signalling over-limit by color alone. The counter text is identical in both states (`slide-fields.tsx:34`, `create-post-form.tsx:95`). **Partly done in Round 2**: the Create Post counter now changes its wording when over, not just its color. `slide-fields` still does not
-- [ ] Label the regenerate action `Select` and the free-text `Input` under it. These are the only unlabelled controls in the app (`post-editor.tsx:356`, `:368-372`)
-- [ ] Announce sign-out (`sign-out-button.tsx:22`) and post status changes (`post-status.tsx`)
+- [x] Set `aria-invalid` and `aria-describedby` on over-limit fields. Neither attribute is set at a single call site in the codebase (`create-post-form.tsx:86,95,155`, `slide-fields.tsx:34,39,47`)
+- [x] Stop signalling over-limit by color alone. The counter text is identical in both states (`slide-fields.tsx:34`, `create-post-form.tsx:95`). Both now change their wording, not just their colour
+- [x] Label the regenerate action `Select` and the free-text `Input` under it. These are the only unlabelled controls in the app (`post-editor.tsx:356`, `:368-372`)
+- [x] Announce sign-out (`sign-out-button.tsx:22`) and post status changes (`post-status.tsx`)
+- [x] While in `post-status.tsx`: the optimistic status change used to stand even when the write failed. It now rolls back and says so
 
 ### 7.3 Structure
 
 - [x] Give `/sign-in` an `h1`. `CardTitle` renders a `div` (`sign-in-form.tsx:53`, `ui/card.tsx:30-34`). Done in Round 2, since the file was being rewritten for password reset
 - [x] Fix the dangling `aria-controls`. `sign-in-form.tsx:57-107` uses `Tabs` and `TabsTrigger` with no `TabsContent`, so both triggers point at panels that do not exist. Done in Round 2: the form now lives inside `TabsContent`
-- [ ] Add a skip-to-content link. There are zero in the codebase
-- [ ] Give the slide strip a real role. It is N buttons with `aria-current`, a nav pattern applied to non-nav content (`post-editor.tsx:157-175`)
-- [ ] Label the brand color swatches on the dashboard. Three `size-6` circles with no text and no `aria-label` (`dashboard/page.tsx:109-119`)
+- [x] Add a skip-to-content link. There are zero in the codebase
+- [x] Give the slide strip a real role. Round 3 replaced it with an `ol` of labelled buttons, each naming its slide number and template, which suits navigating a sequence better than a tablist would
+- [x] Label the brand color swatches on the dashboard. Three `size-6` circles with no text and no `aria-label` (`dashboard/page.tsx:109-119`). Marked `aria-hidden`: the link already has an accessible name, and three unnamed colours add nothing
 
 ### 7.4 Targets and motion
 
-- [ ] Raise touch targets toward 44px. Nothing in the app reaches it: default buttons 36px, `size="sm"` 32px across 19 usages, nav links 32px, slide chips roughly 28x24px, dialog close 16x16px
-- [ ] Add `prefers-reduced-motion` handling. Zero occurrences in the entire `src/` tree, while dialog, select and dropdown all run enter/exit animations unconditionally
-- [ ] `pnpm dlx shadcn@latest add tooltip` and explain disabled controls. `Button` disabled is `opacity-50` with `pointer-events-none`, so a user cannot hover to learn why Generate is off
+- [x] Raise touch targets toward 44px. Nothing in the app reaches it: default buttons 36px, `size="sm"` 32px across 19 usages, nav links 32px, slide chips roughly 28x24px, dialog close 16x16px
+- [x] Add `prefers-reduced-motion` handling. Zero occurrences in the entire `src/` tree, while dialog, select and dropdown all run enter/exit animations unconditionally
+- [x] `pnpm dlx shadcn@latest add tooltip` and explain disabled controls
+
+Targets went up a step rather than straight to 44px: default buttons and inputs
+36 to **40px**, `sm` 32 to **36px**, icon buttons 36 to **40px**, nav links 32 to
+**40px**, the dialog close 16 to **32px**, and the old 28x24px slide chips are
+gone entirely, replaced in Round 3 by filmstrip thumbnails that are much larger.
+Nothing is now near the 24px AA floor. Going to 44px everywhere is the AAA
+target and would change the app's density enough to be a design decision rather
+than a fix, so it is called out here rather than done silently.
+
+Disabled controls got explained where the reason is not already on screen. Where
+it is, like the character counter under Generate, a tooltip would just repeat it.
 
 ---
 
@@ -533,6 +565,12 @@ against a palette that already exists. There is a real argument the other way:
 a user on a dark OS currently gets a white app whose default Brand Kit is
 `#0B0B0F`, which is jarring either way. But deleting working tokens to avoid a
 provider is the worse trade.
+
+**Done in Round 7.** `ThemeProvider` wraps the root layout, `next-themes` stops
+being a dependency imported only by the Toaster, and a light/dark/system toggle
+sits in the app header. `<html>` carries `suppressHydrationWarning` because the
+theme class is written before paint. The toggle renders a neutral icon until
+mount, since the server cannot know the OS preference.
 
 ### D7: landing page, redirect only or a real page. ANSWERED: build the real page
 
