@@ -271,7 +271,10 @@ export async function saveDesignAction(
   if (!parsedConfig.success) return { ok: false, error: firstIssueMessage(parsedConfig.error) };
 
   if (Object.keys(parsedConfig.data).length === 0) {
-    return { ok: false, error: "This slide uses the Brand Kit as it is, so there is nothing to save." };
+    return {
+      ok: false,
+      error: "This slide uses the Brand Kit as it is, so there is nothing to save.",
+    };
   }
 
   if ((await countSavedDesigns(userId)) >= maxSavedDesigns) {

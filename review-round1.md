@@ -547,6 +547,18 @@ already exist and the `template` table is already in the schema. The reason to
 wait for Round 4 is that the Brand Kit should tell the truth before users start
 saving looks derived from it.
 
+**Done, after Round 4 as planned.** The `template` table has carried exactly the
+right shape since Phase 1 and nothing ever wrote to it, so this needed **no
+migration**. New `server/designs.ts`, plus a "Saved looks" section inside the
+slide design panel: save the current slide's overrides under a name, put that
+look on any other slide with one click, delete one you are done with.
+
+Three deliberate limits. A look stores **overrides only, never copy**, because
+it exists to keep posts consistent over time and the AI already owns the words.
+Saving under an existing name **replaces** it, which is what "save" means to
+someone refining one look rather than collecting many. And it is capped at 12,
+so it stays a list you can read rather than another wall of options.
+
 ### D3: caption generation at the export moment. ANSWERED: do it
 
 Spec section 20, parked in the Backlog at `tasks.md:124`, and explicitly tied

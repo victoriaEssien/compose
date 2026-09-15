@@ -145,7 +145,7 @@ overflows at 390px. Rounds 7 and 8 of `review-round1.md` finish it.
 
 ## Backlog (post-MVP, do not start unless asked)
 
-- [ ] Save a generated design as a reusable template (spec section 15)
+- [x] Save a generated design as a reusable template (spec section 15). Built during the UI review; see D2 in review-round1.md
 - [ ] Caption, CTA and hashtag generation (spec section 20)
 - [ ] Instagram publishing via official Meta APIs (spec sections 19, 31)
 - [ ] Scheduling
