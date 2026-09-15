@@ -14,7 +14,7 @@ export function PostCard({ post }: { post: PostRow }) {
   return (
     <Link
       href={`/posts/${post.id}`}
-      className="hover:border-foreground/20 block rounded-lg border p-4 transition-colors"
+      className="hover:border-foreground/20 block rounded-lg border p-5 transition-colors"
     >
       <p className="line-clamp-2 font-medium">{post.title}</p>
       <p className="text-muted-foreground mt-2 text-xs">
