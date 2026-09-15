@@ -136,6 +136,43 @@ overflows at 390px. Rounds 7 and 8 of `review-round1.md` finish it.
 
 ---
 
+## Phase 10: visual identity and account
+
+Round 1 fixed how the app behaves. This round fixes what it looks like, plus two
+defects found by using it.
+
+The app had no visual identity at all: default shadcn neutral tokens, zero
+chroma, Geist everywhere, a text wordmark and a row of tabs. For a product whose
+entire promise is "consistently good design", that undermines the pitch on the
+first screen. The world it has now is paper and ink with a single indigo, and
+every colour pair in `globals.css` carries its measured contrast ratio in a
+comment beside it.
+
+- [x] Dashboard covers never rendered. `next/image` sends the optimizer to fetch
+      the source server to server, with no session cookie, so the cookie-authed
+      PNG routes answered 401. `unoptimized` on both callers.
+- [x] React key warning on every editor load. An array of rendered slide
+      elements crossing the server/client boundary is serialised as a list, and
+      a template returns its root element without a key.
+- [x] Design tokens: warm paper ground, warm ink, one indigo for the primary
+      action, active route and focus ring. Status colours for draft, ready and
+      exported. A two-layer warm shadow scale.
+- [x] Space Grotesk as the display face, via `next/font` rather than the Satori
+      TTF. It is already one of the five Brand Kit families.
+- [x] A logo mark and wordmark, used in the shell, on auth, on the landing page
+      and on the error routes.
+- [x] Workspace shell: a real sidebar with the primary action, the nav, a live
+      Brand Kit chip and an account menu. A drawer on phones, same nav.
+- [x] `PageHeader` and `SectionHeader`, so every page has the same shape.
+- [x] Account settings at `/settings`: name, picture, password change, theme,
+      and signing other devices out.
+- [x] Logo and avatar fields show the image. They used to show 90 characters of
+      Blob URL and no picture, which is the one thing the field is for.
+- [x] Landing page rebuilt: a fanned deck of real slides, and the same slide
+      rendered in three Brand Kit presets.
+
+---
+
 ## Decisions to confirm
 
 - [x] **Renderer.** Decided: `next/og` (Satori), documented in `AGENTS.md`. Templates are flexbox JSX with inline styles, fonts ship as TTFs in `public/fonts/`.
