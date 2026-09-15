@@ -23,13 +23,13 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 
 ## Phase 1: Data model and shared schemas
 
-- [ ] Drizzle tables for `brand`, `asset`, `post`, `slide`, `template` (spec section 25), with `jsonb` for fonts, colors, generatedContent, content, designConfig, configuration
-- [ ] Enums: post type (spec section 8 + `auto`), post status (`draft`, `ready`, `exported`), template kind (spec section 11), asset type
-- [ ] Indexes on `userId` and `(postId, order)`
-- [ ] Zod schemas in `src/types/`: `BrandKit`, `PostSpec` (structured post JSON, spec sections 12 and 26), `SlideSpec` as a discriminated union on `template`
-- [ ] Derive TS types from the Zod schemas (single source of truth)
-- [ ] Generate and apply the first migration (`pnpm db:generate`, `pnpm db:migrate`)
-- [ ] Unit tests for `PostSpec` validation (valid, missing fields, unknown template, overlong text)
+- [x] Drizzle tables for `brand`, `asset`, `post`, `slide`, `template` (spec section 25), with `jsonb` for fonts, colors, generatedContent, content, designConfig, configuration
+- [x] Enums: post type (spec section 8 + `auto`), post status (`draft`, `ready`, `exported`), template kind (spec section 11), asset type
+- [x] Indexes on `userId` and `(postId, order)`
+- [x] Zod schemas in `src/types/`: `BrandKit`, `PostSpec` (structured post JSON, spec sections 12 and 26), `SlideSpec` as a discriminated union on `template`
+- [x] Derive TS types from the Zod schemas (single source of truth)
+- [x] Generate and apply the first migration (`pnpm db:generate`, `pnpm db:migrate`)
+- [x] Unit tests for `PostSpec` validation (valid, missing fields, unknown template, overlong text)
 
 ## Phase 2: Authentication
 
