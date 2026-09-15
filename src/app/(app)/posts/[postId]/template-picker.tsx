@@ -76,9 +76,11 @@ export function TemplatePicker({
               )}
             >
               <span className="bg-muted relative block aspect-[4/5] overflow-hidden rounded-sm">
+                {/* Cookie-authed route, so it cannot go through the optimizer. */}
                 <Image
                   src={`/api/templates/${kind}/png?format=${format}`}
                   alt=""
+                  unoptimized
                   fill
                   sizes="(max-width: 640px) 50vw, 220px"
                   className="object-cover"

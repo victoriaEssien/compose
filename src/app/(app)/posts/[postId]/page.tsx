@@ -1,6 +1,7 @@
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Fragment } from "react";
 
 import { Button } from "@/components/ui/button";
 import { listAssets } from "@/server/assets";
@@ -38,9 +39,17 @@ export default async function Page({
   // Rendered once per slide, then drawn twice at different scales: once in the
   // filmstrip and once on the stage. Elements are reusable, so the expensive
   // part (Shiki, asset lookup) does not run a second time.
-  const elements = await Promise.all(
+  //
+  // Keyed because an array of elements handed to a client component is
+  // serialised as a list, and a template returns its root element without one.
+  // The editor draws these one at a time, so the warning was about a list that
+  // never renders as one, but the fix is the same either way.
+  const rendered = await Promise.all(
     inputs.map((input) => slideElement(input, brand, format, inputs.length, assetUrls)),
   );
+  const elements = rendered.map((element, at) => (
+    <Fragment key={slides[at].id}>{element}</Fragment>
+  ));
 
   const size = formatSizes[format];
 

@@ -24,9 +24,17 @@ export function PostCard({ post }: { post: PostWithCover }) {
     >
       {post.coverSlideId ? (
         <div className="bg-muted relative aspect-[4/5]">
+          {/*
+            The optimizer fetches the source itself, server to server, with no
+            session cookie, so this route answered it 401 and every cover on the
+            dashboard came back broken. Unoptimized makes the browser fetch it,
+            which is also what we want: the route already renders at the exact
+            size and sets its own private cache header.
+          */}
           <Image
             src={`/api/posts/${post.id}/slides/${post.coverSlideId}/png`}
             alt=""
+            unoptimized
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover"
