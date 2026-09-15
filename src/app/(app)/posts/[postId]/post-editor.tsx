@@ -345,8 +345,8 @@ export function PostEditor({
       : "No icon matches this hint. Generate an illustration, or try another word.";
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)]">
-      <div className="flex flex-col items-center gap-5 lg:sticky lg:top-6 lg:self-start">
+    <div className="grid gap-10 md:grid-cols-[minmax(0,340px)_minmax(0,1fr)] md:gap-8 lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)] lg:gap-10">
+      <div className="flex flex-col items-center gap-5 md:sticky md:top-6 md:self-start">
         <SlideFilmstrip
           slides={slides}
           thumbs={thumbs}

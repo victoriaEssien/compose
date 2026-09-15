@@ -142,7 +142,7 @@ export function BrandKitForm({
   const unreadable = ratio !== null && ratio < readableContrast;
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-10 lg:grid-cols-[1fr_auto]">
+    <form onSubmit={onSubmit} className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_auto]">
       <div className="flex flex-col gap-8">
         <Section
           title="Identity"

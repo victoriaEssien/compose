@@ -21,12 +21,25 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </a>
 
       <header className="border-b">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-6 py-3">
-          <Link href="/dashboard" className="font-semibold">
-            Compose
-          </Link>
+        {/*
+          Four links plus the wordmark and the account controls do not fit 342px,
+          and wrapping produced two or three ragged rows. On phones the nav gets
+          its own scrollable row instead; from sm up it is one row as before.
+        */}
+        <div className="mx-auto flex max-w-5xl flex-col gap-2 px-6 py-3 sm:flex-row sm:items-center sm:gap-x-6">
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard" className="font-semibold">
+              Compose
+            </Link>
+            <div className="ml-auto flex items-center gap-1 sm:hidden">
+              <ThemeToggle />
+              <SignOutButton />
+            </div>
+          </div>
+
           <AppNav />
-          <div className="ml-auto flex items-center gap-1">
+
+          <div className="ml-auto hidden items-center gap-1 sm:flex">
             <ThemeToggle />
             <SignOutButton />
           </div>

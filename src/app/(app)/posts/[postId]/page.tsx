@@ -46,7 +46,7 @@ export default async function Page({
           <p className="text-muted-foreground text-xs">
             {post.type.replaceAll("_", " ")} · {slides.length} slides
           </p>
-          <h1 className="mt-2 text-2xl font-semibold">{post.title}</h1>
+          <h1 className="mt-2 text-2xl font-semibold break-words">{post.title}</h1>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">

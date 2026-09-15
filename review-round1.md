@@ -413,11 +413,25 @@ it is, like the character counter under Generate, a tooltip would just repeat it
 
 ## Round 8: responsive
 
-- [ ] Fix the editor slide row at 390px. It needs **416px** (36 + 12 + 320 + 12 + 36) against **342px** available, and both arrows carry `shrink-0` (`post-editor.tsx:177-203`). The `previewWidth` comment's arithmetic accounts for the page gutters but not for the arrows flanking it
-- [ ] Give `app-nav` a real mobile treatment. Four links plus wordmark plus sign-out exceed 342px and wrap to two or three rows; there is no hamburger, no drawer, and no breakpoint class in the file (`app-nav.tsx:19`, `(app)/layout.tsx:14`)
-- [ ] Add an `md:` layout step. The only two `md:` classes in the app are font-size steps inside input primitives, so the 640 to 1023px band gets the one-column phone layout
-- [ ] Clamp the post title `h1`. No `truncate`, no `line-clamp`, no `break-words`, and there are zero `break-*` utilities in the codebase (`posts/[postId]/page.tsx:55`)
-- [ ] Reconsider preview-above-fields on mobile. Every keystroke is below the fold from the thing it changes (`post-editor.tsx:155`)
+**Status: done.** `pnpm typecheck`, `pnpm lint`, `pnpm test` (240 passing) and
+`pnpm build` all green.
+
+- [x] Fix the editor slide row at 390px. It needs **416px** against **342px** available, and both arrows carry `shrink-0`. Fixed in Round 3: the stage is `min-w-0 flex-1` and measures itself, so it takes whatever the arrows leave rather than forcing a fixed 320px
+- [x] Give `app-nav` a real mobile treatment. Four links plus wordmark plus sign-out exceed 342px and wrap to two or three rows; there is no hamburger, no drawer, and no breakpoint class in the file (`app-nav.tsx:19`, `(app)/layout.tsx:14`)
+- [x] Add an `md:` layout step. The only two `md:` classes in the app are font-size steps inside input primitives, so the 640 to 1023px band gets the one-column phone layout
+- [x] Clamp the post title `h1`. No `truncate`, no `line-clamp`, no `break-words`, and there are zero `break-*` utilities in the codebase (`posts/[postId]/page.tsx:55`)
+- [x] Reconsider preview-above-fields on mobile. Every keystroke is below the fold from the thing it changes (`post-editor.tsx:155`)
+
+No hamburger and no drawer, because neither is installed and four short links do
+not need one. On phones the header splits: wordmark plus account controls on the
+first row, the nav on its own horizontally scrollable row below, with the
+scrollbar hidden. From `sm` up it collapses back to the single row it was.
+
+The editor gets a real `md` step at 340px of preview, and the preview column
+becomes sticky from `md` rather than `lg`, which is what stops the fields
+scrolling away from the thing they change on a tablet. On phones the preview is
+still above the fields, and that is deliberate: it is the reason to be on the
+page, and the filmstrip needs to lead.
 
 ---
 

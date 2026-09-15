@@ -16,7 +16,7 @@ export function AppNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-wrap items-center gap-1">
+    <nav className="-mx-1 flex [scrollbar-width:none] items-center gap-1 overflow-x-auto px-1 sm:overflow-visible [&::-webkit-scrollbar]:hidden">
       {links.map(({ href, label }) => {
         // Exact for /posts/new, prefix elsewhere, so /brand/anything still lights up.
         const active = href === "/posts/new" ? pathname === href : pathname.startsWith(href);

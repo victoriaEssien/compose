@@ -129,7 +129,7 @@ overflows at 390px. Rounds 7 and 8 of `review-round1.md` finish it.
 - [x] Round 5: the generation wait (stage reporting, skeleton, cancel)
 - [x] Round 6: states and error routes (`error.tsx`, `loading.tsx`, `not-found.tsx`)
 - [x] Round 7: accessibility (contrast tokens, error association, targets, motion)
-- [ ] Round 8: responsive (390px editor overflow, mobile nav, `md:` step)
+- [x] Round 8: responsive (390px editor overflow, mobile nav, `md:` step)
 - [ ] Round 9: performance (refresh storm, woff2 subsets, throttling)
 - [ ] Round 10: consistency, copy and hierarchy
 - [ ] Round 11: editor efficiency (keyboard nav, format persistence, breadcrumb)
