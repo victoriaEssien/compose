@@ -10,7 +10,7 @@ export default async function Page() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
-      <h1 className="text-2xl font-semibold">My Assets</h1>
+      <h1 className="text-2xl font-semibold">Your assets</h1>
       <p className="text-muted-foreground mt-2 text-sm">
         Screenshots, logos, avatars and illustrations you can reuse across posts.
       </p>

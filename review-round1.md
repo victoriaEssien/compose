@@ -470,42 +470,44 @@ uses.
 
 ### 10.1 Copy
 
-- [ ] Move `postTypeLabels` to `src/types/post.ts` and use it on the post page, which currently prints the raw enum lowercase as "things i learned" (`posts/[postId]/page.tsx:53`, `create-post-form.tsx:19-28`). **Half done in Round 2**: `postTypeLabels` and `toneLabels` now live in `types/post.ts`. The post page still prints the raw enum
-- [ ] Change the format toggle to "Carousel" and "Square" with the ratios as secondary text (`posts/[postId]/page.tsx:60-77`)
-- [ ] Settle Title Case versus sentence case. "Your Content", "My Assets", "Recent Posts", "Save Brand Kit" against "Create a post", "Regenerate this slide", "Choose an asset", "Welcome back"
-- [ ] Settle Delete versus Remove. Both describe permanent deletion and nothing distinguishes them (`post-editor.tsx:238,313,336`, `asset-list.tsx:83`, `slide-fields.tsx:142`)
-- [ ] Settle the one feature named three ways: nav "Create Post", dashboard CTA "Create Post", page `h1` "Create a post", submit button "Generate"
-- [ ] Make the regenerate action labels parallel. They currently mix verb-first ("Rewrite", "Change layout") with adjective-phrase ("Make shorter", "More technical") (`post-editor.tsx:41-48`)
-- [ ] Remove the en-GB leakage: "Centre" as a label setting the value `"center"` (`slide-design.tsx:78,86`), `aria-label` "Background colour" beside "Background color picker" for the identical control (`slide-design.tsx:39`, `brand-kit-form.tsx:167`), ~~"emphasise" (`create-post-form.tsx:105`)~~ fixed in Round 2
-- [ ] Make ellipses consistent. Every pending label uses "..." except the `aria-live` status, which renders bare "Working" and "Saving" (`post-editor.tsx:100,111,252`)
+**Status: done.** `pnpm typecheck`, `pnpm lint`, `pnpm test` (243 passing) and `pnpm build` all green.
+
+- [x] Move `postTypeLabels` to `src/types/post.ts` and use it on the post page, which printed the raw enum lowercase as "things i learned"
+- [x] Change the format toggle to "Carousel" and "Square" with the ratios as secondary text
+- [x] Settle Title Case versus sentence case. Sentence case everywhere: "Your content", "Your assets", "Recent posts", "Create post"
+- [x] Settle Delete versus Remove. Delete is now always permanent ("Delete slide", "Delete illustration", "Delete asset"); Detach is the reversible one ("Detach image", which leaves the asset in the library)
+- [x] Settle the one feature named three ways: nav, dashboard CTA and page heading all read "Create post". The submit button stays "Generate" because that names the action, not the destination
+- [x] Make the regenerate action labels parallel. All verb-first now: "Rewrite it", "Shorten it", "Clarify it", "Go deeper"
+- [x] Remove the en-GB leakage: "Centre", "colour" and "emphasise" are all gone
+- [x] Make ellipses consistent. The live status now matches the button labels
 
 ### 10.2 Hierarchy
 
-- [ ] Differentiate the editor's three tree levels, currently all `text-sm font-medium`: "Slide 1" (`:250`), "This slide's design" (`:343`), "Regenerate this slide" (`:350`). Meanwhile the preview, the most important object on the page, gets no emphasis at all
-- [ ] Promote the dashboard section headings. `text-sm font-medium` above a grid reads as a label, not a heading (`dashboard/page.tsx:59,70,95`)
-- [ ] Decide on the success metric line, currently 12px muted text under the page title where nobody will read it (`dashboard/page.tsx:50`). Commit to it or drop it
-- [ ] Break up the editor's five-button row, which runs Move earlier, Move later, Duplicate, Delete, Download with no separation between navigation, destruction and export (`post-editor.tsx:205-245`)
-- [ ] Style the design panel. It is a raw `<details>` and `<summary>` sitting among Cards, with no chevron, so users do not discover per-slide color and size controls (`post-editor.tsx:342-347`)
+- [x] Differentiate the editor's three tree levels, previously all `text-sm font-medium`. "Slide N" is now the column heading at `text-lg font-semibold` and carries its template name; the panels below stay `text-sm`
+- [x] Promote the dashboard section headings. `text-sm font-medium` above a grid read as a label, not a heading
+- [x] Decide on the success metric line. **Kept**, and raised from 12px to 14px. It is the product's own measure of whether it works, and spec section 21 bans an analytics panel, not one honest sentence
+- [x] Break up the editor's five-button row. Three groups now, with Delete set apart and coloured rather than sitting between Duplicate and Download
+- [x] Style the design panel. It now has a rotating chevron and says what is inside, instead of reading as a static box
 
 ### 10.3 Visual system
 
-- [ ] Reconcile slide Delete as `variant="outline"` with asset Delete as `variant="destructive"`, the same intent rendered two ways
-- [ ] Replace the `&larr;` and `&rarr;` HTML entities with `ChevronLeft` and `ChevronRight`. `lucide-react` is a dependency with zero icons in the app UI (`post-editor.tsx:185,201`)
-- [ ] Narrow the spacing set. 44 distinct spacing utilities across roughly 3,200 LOC, all on-scale but far too broad; `gap-8`, `gap-5` and `gap-x-6`/`gap-y-2` are singletons
-- [ ] Reconcile `rounded-xl` on `slide-preview.tsx:32` against `rounded-lg` on every sibling container
-- [ ] Widen the type scale. `text-2xl` for page titles then `text-sm`/`text-xs` for everything else is the entire hierarchy; `text-base` never appears outside input defaults
-- [ ] Guard against `slide-fields.tsx:27` deriving input ids from label text. No collision today, but a template with two same-named fields produces duplicate DOM ids silently
+- [x] Reconcile slide Delete with asset Delete. Both read as destructive now
+- [x] Replace the `&larr;` and `&rarr;` HTML entities with `ChevronLeft` and `ChevronRight`. `lucide-react` had zero icons in the app UI; it is now used in the nav, the editor, the export panel, the breadcrumb and the icon picker
+- [ ] Narrowing the spacing set, and reconciling `rounded-xl` on the slide preview against `rounded-lg` everywhere else, are both still open. Real but cosmetic, and they want one deliberate pass over every surface rather than being folded into a round that was fixing other things
+- [x] Widen the type scale. The ladder is now `text-2xl` page, `text-lg` section, `text-sm` panel, `text-xs` meta, rather than one step from title to everything
+- [x] Guard against `slide-fields.tsx:27` deriving input ids from label text. Now `useId()`, which cannot collide and needs nothing from callers
 
 ---
 
 ## Round 11: editor efficiency
 
-- [ ] Keyboard navigation between slides. Arrow keys are inert, so moving between six slides is six mouse trips to a row of digits (`post-editor.tsx:157-202`)
-- [ ] Keyboard shortcuts for the common actions
-- [ ] Preserve the active slide when switching format. It is a `<Link>` navigation that resets to slide 1, so checking the square crop on slide 5 dumps you back to slide 1 (`posts/[postId]/page.tsx:71`)
-- [ ] Prefix-match the nav active state and add a breadcrumb home from the editor. `app-nav.tsx:21` matches `pathname === href` exactly, so `/posts/[id]` highlights nothing and the surface users spend the most time in has no "you are here"
-- [ ] Reduce reordering cost. Moving slide 6 to position 2 is four clicks, four server actions and four `router.refresh()` calls
-- [ ] Consider duplicate-post and regenerate-whole-post. Neither exists
+**Status: done**, bar one deliberate omission.
+
+- [x] Keyboard navigation between slides. Left and right now move between slides, and are ignored inside inputs, textareas and dialogs so they never steal a caret move
+- [x] Preserve the active slide when switching format. The slide index rides in the URL, so checking the square crop on slide 5 leaves you on slide 5
+- [x] Prefix-match the nav active state and add a breadcrumb home from the editor
+- [x] Reduce reordering cost. Round 3's drag makes it one action instead of four
+- [ ] Keyboard shortcuts beyond the arrows, and duplicate-post / regenerate-whole-post. Left out on purpose: a shortcut set is worth deciding as a set, and neither bulk action has a demonstrated need yet
 
 ---
 

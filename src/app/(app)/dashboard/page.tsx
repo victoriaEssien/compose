@@ -48,11 +48,11 @@ export default async function Page() {
     <main className="mx-auto max-w-5xl px-6 py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Your Content</h1>
-          {summary && <p className="text-muted-foreground mt-1 text-xs">{summary}</p>}
+          <h1 className="text-2xl font-semibold">Your content</h1>
+          {summary && <p className="text-muted-foreground mt-1 text-sm">{summary}</p>}
         </div>
         <Button asChild variant={firstRun ? "outline" : "default"}>
-          <Link href="/posts/new">Create Post</Link>
+          <Link href="/posts/new">Create post</Link>
         </Button>
       </div>
 
@@ -62,7 +62,7 @@ export default async function Page() {
       */}
       {firstRun && (
         <section className="mt-10">
-          <h2 className="text-sm font-medium">Start here</h2>
+          <h2 className="text-lg font-semibold">Start here</h2>
           <div className="mt-3">
             <EmptyState
               title="Set up your Brand Kit first"
@@ -76,7 +76,7 @@ export default async function Page() {
 
       {drafts.length > 0 && (
         <section className="mt-10">
-          <h2 className="text-sm font-medium">Drafts</h2>
+          <h2 className="text-lg font-semibold">Drafts</h2>
           <p className="text-muted-foreground mt-1 text-xs">Pick up where you left off.</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {drafts.map((post) => (
@@ -87,7 +87,7 @@ export default async function Page() {
       )}
 
       <section className="mt-10">
-        <h2 className="text-sm font-medium">Recent Posts</h2>
+        <h2 className="text-lg font-semibold">Recent posts</h2>
         {recent.length ? (
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {recent.map((post) => (
@@ -101,7 +101,7 @@ export default async function Page() {
               description={
                 drafts.length
                   ? "Posts show up here once you mark them ready or download them."
-                  : "Paste a rough idea, a project update or something you learned, and Compose will turn it into a carousel. There is an example on the Create Post screen if you want to watch it work first."
+                  : "Paste a rough idea, a project update or something you learned, and Compose will turn it into a carousel. There is an example on the Create post screen if you want to watch it work first."
               }
               action={
                 drafts.length ? undefined : { href: "/posts/new", label: "Create your first post" }
@@ -114,7 +114,7 @@ export default async function Page() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-sm font-medium">Your brand</h2>
+        <h2 className="text-lg font-semibold">Your brand</h2>
         {needsBrandKit ? (
           <div className="mt-3">
             {firstRun ? (

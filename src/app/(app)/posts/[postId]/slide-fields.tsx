@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +24,10 @@ function Field({
   mono?: boolean;
   onChange: (value: string) => void;
 }) {
-  const id = label.toLowerCase().replaceAll(" ", "-");
+  // Was derived from the label text, which happened not to collide but would
+  // have done silently the first time a template carried two fields of the same
+  // name. useId cannot collide and needs nothing from the caller.
+  const id = useId();
   const countId = `${id}-count`;
   const over = value.length > max;
 

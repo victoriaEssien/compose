@@ -62,14 +62,15 @@ import { TemplatePicker } from "./template-picker";
 
 export type { EditableSlide };
 
+/** All verb-first, so the list reads as one set of instructions. */
 const regenerateLabels: Record<RegenerateAction, string> = {
-  rewrite: "Rewrite",
-  shorter: "Make shorter",
-  clearer: "Make clearer",
-  funnier: "Make funnier",
-  more_technical: "More technical",
-  change_layout: "Change layout",
-  another_design: "Another design",
+  rewrite: "Rewrite it",
+  shorter: "Shorten it",
+  clearer: "Clarify it",
+  funnier: "Lighten it",
+  more_technical: "Go deeper",
+  change_layout: "Change the layout",
+  another_design: "Try another angle",
 };
 
 /** Each action names itself, so one button's progress never labels another's. */
@@ -92,6 +93,7 @@ export function PostEditor({
   slides,
   previews,
   thumbs,
+  startAt,
   slideWidth,
   slideHeight,
   assets,
@@ -103,6 +105,7 @@ export function PostEditor({
   /** The rendered slides. Same elements as `thumbs`, drawn at a different scale. */
   previews: React.ReactNode[];
   thumbs: React.ReactNode[];
+  startAt: number;
   slideWidth: number;
   slideHeight: number;
   assets: AssetRow[];
@@ -110,7 +113,7 @@ export function PostEditor({
   format: string;
 }) {
   const router = useRouter();
-  const [active, setActive] = useState(0);
+  const [active, setActive] = useState(startAt);
   const index = Math.min(active, slides.length - 1);
   const slide = slides[index];
 
@@ -185,6 +188,29 @@ export function PostEditor({
     return () => clearTimeout(timer);
   }, [editing, slide, flushPending, router]);
 
+  /*
+   * Left and right move between slides, which is what a carousel editor should
+   * do and what the arrow keys did nothing for before. Ignored while typing, so
+   * it never steals a caret move, and while a dialog is open.
+   */
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable='true'], [role='dialog']")) {
+        return;
+      }
+
+      event.preventDefault();
+      selectRef.current(event.key === "ArrowLeft" ? -1 : 1);
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   // Closing the tab inside the debounce window would drop the last keystrokes.
   const dirty = shouldAutosave(editing, slide);
   useEffect(() => {
@@ -240,6 +266,12 @@ export function PostEditor({
     return () =>
       run("undo", () => saveSlideAction(postId, slideId, previous.content, previous.design));
   }
+
+  const selectRef = useRef<(step: -1 | 1) => void>(() => {});
+  selectRef.current = (step) => {
+    const target = index + step;
+    if (target >= 0 && target < slides.length) selectSlide(target);
+  };
 
   function selectSlide(at: number) {
     if (at === index) return;
@@ -419,55 +451,71 @@ export function PostEditor({
           </Button>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        {/*
+          Three groups, not one row of five. Delete used to sit between Duplicate
+          and Download with nothing marking it out.
+        */}
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label="Reorder: move this slide earlier in the post"
+              disabled={busy || index === 0}
+              onClick={() => move(-1)}
+            >
+              Move earlier
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label="Reorder: move this slide later in the post"
+              disabled={busy || index === slides.length - 1}
+              onClick={() => move(1)}
+            >
+              Move later
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy}
+              onClick={() => run("duplicate", () => duplicateSlideAction(postId, slide.id))}
+            >
+              Duplicate
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <a
+                href={`/api/posts/${postId}/slides/${slide.id}/png?format=${format}&download=1`}
+                download
+              >
+                Download
+              </a>
+            </Button>
+          </div>
+
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            aria-label="Reorder: move this slide earlier in the post"
-            disabled={busy || index === 0}
-            onClick={() => move(-1)}
-          >
-            Move earlier
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            aria-label="Reorder: move this slide later in the post"
-            disabled={busy || index === slides.length - 1}
-            onClick={() => move(1)}
-          >
-            Move later
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={busy}
-            onClick={() => run("duplicate", () => duplicateSlideAction(postId, slide.id))}
-          >
-            Duplicate
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
             disabled={busy || slides.length === 1}
             onClick={() => setConfirmingDelete(true)}
           >
-            Delete
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <a
-              href={`/api/posts/${postId}/slides/${slide.id}/png?format=${format}&download=1`}
-              download
-            >
-              Download
-            </a>
+            Delete slide
           </Button>
         </div>
       </div>
 
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-sm font-medium">Slide {index + 1}</h2>
+          <h2 className="text-lg font-semibold">
+            Slide {index + 1}
+            <span className="text-muted-foreground ml-2 text-sm font-normal">
+              {templateNames[draft.template]}
+            </span>
+          </h2>
           <span
             aria-live="polite"
             className={cn("text-xs", saveFailed ? "text-destructive" : "text-muted-foreground")}
@@ -551,7 +599,7 @@ export function PostEditor({
                       run("unillustrate", () => removeIllustrationAction(postId, slide.id))
                     }
                   >
-                    Remove illustration
+                    Delete illustration
                   </Button>
                 )}
               </div>
@@ -577,14 +625,18 @@ export function PostEditor({
                 size="sm"
                 onClick={() => setDraft({ ...draft, assetId: null })}
               >
-                Remove image
+                Detach image
               </Button>
             )}
           </div>
         )}
 
-        <details className="rounded-lg border p-4">
-          <summary className="cursor-pointer text-sm font-medium">This slide&apos;s design</summary>
+        <details className="group rounded-lg border p-4 [&_summary::-webkit-details-marker]:hidden">
+          <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium">
+            <ChevronRight className="size-4 transition-transform group-open:rotate-90" />
+            This slide&apos;s design
+            <span className="text-muted-foreground font-normal">colors and text size</span>
+          </summary>
           <div className="mt-4">
             <SlideDesign design={design} fallback={brandColors} onChange={setDesign} />
           </div>
