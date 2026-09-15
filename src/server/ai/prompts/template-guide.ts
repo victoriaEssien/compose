@@ -6,7 +6,7 @@ export const templateGuide = [
   `- cover: headline (max ${limit.headline}), subheadline (max ${limit.subheadline}, or null). The opening slide.`,
   `- text: heading (max ${limit.heading}) and body (max ${limit.body}).`,
   `- numbered_list: optional heading, plus 2 to ${maxListItems} items of title (max ${limit.itemTitle}) and body (max ${limit.itemBody}, or null).`,
-  `- code: optional heading, language, code (max ${limit.code}) and explanation (max ${limit.explanation}, or null).`,
+  `- code: optional heading, language, code (max ${limit.code}) and explanation (max ${limit.explanation}, or null). Keep every line of code under 55 characters so it fits the slide without shrinking.`,
   `- comparison: optional heading, plus left and right, each a label (max ${limit.comparisonLabel}) and body (max ${limit.comparisonBody}).`,
   `- quote: quote (max ${limit.quote}) and attribution (max ${limit.attribution}, or null). Only for one short, genuinely quotable line, never a paragraph. attribution is who said it, or null when it is the user's own words.`,
   `- screenshot: optional heading, assetId, caption (max ${limit.caption}, or null).`,

@@ -47,6 +47,55 @@ function describe(error: z.ZodError) {
     .join("; ");
 }
 
+/** Cuts at the last sentence, else the last word, so a trim never lands mid-word. */
+export function trimTo(value: string, max: number) {
+  if (value.length <= max) return value;
+
+  const head = value.slice(0, max);
+  const sentence = Math.max(head.lastIndexOf(". "), head.lastIndexOf("! "), head.lastIndexOf("? "));
+  if (sentence >= max * 0.6) return head.slice(0, sentence + 1);
+
+  const word = head.slice(0, max - 1).lastIndexOf(" ");
+  return `${(word > 0 ? head.slice(0, word) : head.slice(0, max - 1)).trimEnd()}…`;
+}
+
+function setAt(root: unknown, path: PropertyKey[], value: string) {
+  let node = root as Record<PropertyKey, unknown>;
+  for (const key of path.slice(0, -1)) {
+    node = node?.[key] as Record<PropertyKey, unknown>;
+    if (node === null || typeof node !== "object") return;
+  }
+  const last = path.at(-1);
+  if (last !== undefined) node[last] = value;
+}
+
+/**
+ * Models cannot count characters, so overlong text is the one failure worth
+ * repairing rather than retrying. Nothing else is touched: if other issues
+ * remain the value still fails and the retry runs as normal.
+ */
+function repairOverlongText(payload: unknown, error: z.ZodError) {
+  const overlong = error.issues.filter(
+    (issue): issue is z.core.$ZodIssueTooBig =>
+      issue.code === "too_big" && issue.origin === "string",
+  );
+  if (overlong.length === 0) return null;
+
+  const repaired = structuredClone(payload);
+  for (const issue of overlong) {
+    const max = Number(issue.maximum);
+    if (!Number.isFinite(max)) continue;
+
+    const current = issue.path.reduce<unknown>(
+      (node, key) => (node as Record<PropertyKey, unknown>)?.[key],
+      repaired,
+    );
+    if (typeof current === "string") setAt(repaired, issue.path, trimTo(current, max));
+  }
+
+  return repaired;
+}
+
 /**
  * One retry, with the rejection reason fed back to the model. A second failure
  * is a real error rather than something to keep paying for.
@@ -91,6 +140,12 @@ export async function generateStructured<T>(
     const payload = wrapped ? (parsed.value as { value?: unknown })?.value : parsed.value;
     const validated = request.schema.safeParse(payload);
     if (validated.success) return validated.data;
+
+    const repaired = repairOverlongText(payload, validated.error);
+    if (repaired !== null) {
+      const revalidated = request.schema.safeParse(repaired);
+      if (revalidated.success) return revalidated.data;
+    }
 
     problem = describe(validated.error);
   }

@@ -1,6 +1,6 @@
 /** Post reads and writes (spec sections 21 and 26). */
 import "server-only";
-import { and, desc, eq, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
 
 import type { GeneratePostInput, PostSpec, PostStatus } from "@/types/post";
 import { db } from "./db/client";
@@ -74,7 +74,8 @@ export async function loadPost(userId: string, postId: string) {
     .select()
     .from(slide)
     .where(eq(slide.postId, postId))
-    .orderBy(slide.order);
+    // order is not unique, so id breaks ties and every query agrees on the sequence.
+    .orderBy(asc(slide.order), asc(slide.id));
 
   return { post: row, slides };
 }

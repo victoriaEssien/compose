@@ -71,6 +71,9 @@ export async function duplicateSlide(userId: string, postId: string, slideId: st
       imageUrl: source.imageUrl,
     });
 
+  // Leaves orders at 0..n-1, so a tie can never survive a duplicate.
+  await compactOrder(postId);
+
   return true;
 }
 
@@ -107,7 +110,7 @@ async function compactOrder(postId: string) {
     .select({ id: slide.id })
     .from(slide)
     .where(eq(slide.postId, postId))
-    .orderBy(asc(slide.order));
+    .orderBy(asc(slide.order), asc(slide.id));
 
   await writeOrder(
     postId,

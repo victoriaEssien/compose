@@ -4,6 +4,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { iconNodes } from "./icon-nodes";
 import type { IconName } from "./icon-nodes";
 
+import { fitCodeFontSize } from "./theme";
 import type { SlideTheme } from "./theme";
 import type { CodeLine } from "./types";
 
@@ -202,6 +203,16 @@ export function CodeBlock({
   const palette = codePalettes[theme.codeBlock];
   const content = lines ?? raw.split("\n").map((text) => [{ text, color: palette.text }]);
 
+  const longestLine = content.reduce(
+    (widest, line) =>
+      Math.max(
+        widest,
+        line.reduce((n, token) => n + token.text.length, 0),
+      ),
+    0,
+  );
+  const fontSize = fitCodeFontSize(longestLine, theme);
+
   return (
     <div
       style={{
@@ -214,7 +225,7 @@ export function CodeBlock({
         border:
           theme.codeBlock === "terminal" ? `1px solid ${theme.colors.accent}` : palette.border,
         fontFamily: "JetBrains Mono",
-        fontSize: theme.type.code,
+        fontSize,
         lineHeight: 1.5,
       }}
     >

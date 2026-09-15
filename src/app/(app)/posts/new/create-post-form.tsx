@@ -36,7 +36,9 @@ const toneLabels = {
   serious: "Serious",
 } as const;
 
+// The same bounds generatePostInputSchema enforces, shown before you hit Generate.
 const minContent = 20;
+const maxContent = 6000;
 
 export function CreatePostForm() {
   const [content, setContent] = useState("");
@@ -46,7 +48,9 @@ export function CreatePostForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const tooShort = content.trim().length < minContent;
+  const length = content.trim().length;
+  const tooShort = length < minContent;
+  const tooLong = length > maxContent;
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -54,6 +58,11 @@ export function CreatePostForm() {
 
     if (tooShort) {
       setError("Give Compose a bit more to work with, at least a couple of sentences.");
+      return;
+    }
+
+    if (tooLong) {
+      setError(`That is ${length - maxContent} characters over. Trim it down to ${maxContent}.`);
       return;
     }
 
@@ -83,8 +92,8 @@ export function CreatePostForm() {
           disabled={pending}
           required
         />
-        <p className="text-muted-foreground text-xs">
-          {content.trim().length} characters. Compose works best with a few sentences of detail.
+        <p className={tooLong ? "text-destructive text-xs" : "text-muted-foreground text-xs"}>
+          {length} / {maxContent} characters. Compose works best with a few sentences of detail.
         </p>
       </div>
 
@@ -149,7 +158,7 @@ export function CreatePostForm() {
       )}
 
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={pending || tooShort}>
+        <Button type="submit" disabled={pending || tooShort || tooLong}>
           {pending ? "Generating..." : "Generate"}
         </Button>
         {pending && (

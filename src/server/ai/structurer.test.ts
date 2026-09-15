@@ -76,9 +76,19 @@ describe("structureContent", () => {
     expect(result.cta).toBe("Move your migrations into the build");
   });
 
-  it("still rejects a cta that overruns the slide", async () => {
-    const tooLong = { ...structure, cta: "a".repeat(structureLimits.cta + 1) };
-    const { provider } = fakeProvider([tooLong, tooLong]);
+  it("trims a cta that overruns the slide rather than failing the post", async () => {
+    const tooLong = { ...structure, cta: `${"word ".repeat(40)}end.` };
+    const { provider, calls } = fakeProvider([tooLong]);
+
+    const result = await structureContent(provider, input, analysis, defaultBrandKit);
+
+    expect(result.cta.length).toBeLessThanOrEqual(structureLimits.cta);
+    expect(calls).toHaveLength(1);
+  });
+
+  it("still fails when the answer is wrong in a way trimming cannot fix", async () => {
+    const noPoints = { ...structure, supportingPoints: [] };
+    const { provider } = fakeProvider([noPoints, noPoints]);
 
     await expect(structureContent(provider, input, analysis, defaultBrandKit)).rejects.toThrow(
       /^structure\.v1:/,

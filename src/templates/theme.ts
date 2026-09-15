@@ -65,3 +65,22 @@ export function slideTheme(
     },
   };
 }
+
+/** JetBrains Mono advances 0.6em per character, and every glyph is the same width. */
+const monoAdvance = 0.6;
+
+/** Padding inside the code surface, both sides. */
+const codeInset = 64;
+
+/**
+ * Code must not wrap, so a long line shrinks the whole block to fit instead of
+ * spilling off the slide. Floored so it stays readable at 1080 wide.
+ */
+export function fitCodeFontSize(longestLine: number, theme: SlideTheme) {
+  if (longestLine <= 0) return theme.type.code;
+
+  const available = theme.width - theme.padding * 2 - codeInset;
+  const fitted = Math.floor(available / (longestLine * monoAdvance));
+
+  return Math.max(14, Math.min(theme.type.code, fitted));
+}
