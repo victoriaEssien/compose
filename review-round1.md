@@ -248,15 +248,38 @@ download they actually came for. The shared shape lives in
 Spec sections 5 and 33 make visual identity the entire differentiator. It got a
 settings form with a preview that lies.
 
-- [ ] Replace `BrandPreview` with real `SlidePreview` output driven by `src/templates/fixtures.ts` (`brand-preview.tsx:3-6`). The comment still reads "Stand-in for the real renderer (Phase 6)"; Phase 6 shipped and `tasks.md:52` is ticked
-- [ ] Show three fixtures at once (Cover, Code, Numbered list) so card style, code block style and illustration style are all visible. Six of eleven controls currently produce no feedback at all: card style, illustration style, code block style, logo, and the secondary font's footer role
-- [ ] Pass previews down as `ReactNode[]` the way `posts/[postId]/page.tsx:34-46` already does, debounced on kit change
-- [ ] Add four starter palettes that set colors, fonts, radius and card style in one click. Spec section 4 says this user is bad at graphic design; four raw hex pickers is the wrong tool for that person
-- [ ] Contrast-check background against text and warn below 4.5:1. `hexColorSchema` currently accepts a pair that renders every slide invisible
-- [ ] Disclose the blast radius on save: `slideTheme()` resolves from `loadBrandKit()` at render time, so a kit edit retroactively restyles every post including ones already marked Exported, and nothing says so
-- [ ] Give the five bare `<section>` elements real headings. Eleven controls, no sectioning, one Save button (`brand-kit-form.tsx`)
-- [ ] Put the save confirmation in a live region. "Saved." is a plain `<span>` while the error branch two lines down has `role="alert"` (`brand-kit-form.tsx:281`)
-- [ ] Resolve "Brand Kit" being an `h1` on `/brand` and an `h2` on `/dashboard:95`
+**Status: done.** `pnpm typecheck`, `pnpm lint`, `pnpm test` (238 passing, 10
+new) and `pnpm build` all green.
+
+- [x] Replace `BrandPreview` with real renderer output driven by `src/templates/fixtures.ts` (`brand-preview.tsx:3-6`). The comment still reads "Stand-in for the real renderer (Phase 6)"; Phase 6 shipped and `tasks.md:52` is ticked
+- [x] Show three fixtures at once (Cover, Numbered list, Code) so card style, code block style and illustration style are all visible. Six of eleven controls currently produce no feedback at all: card style, illustration style, code block style, logo, and the secondary font's footer role
+- [x] Update the preview live, debounced on kit change
+- [x] Add four starter palettes that set colors, fonts, radius and card style in one click. Spec section 4 says this user is bad at graphic design; four raw hex pickers is the wrong tool for that person
+- [x] Contrast-check background against text and warn below 4.5:1. `hexColorSchema` currently accepts a pair that renders every slide invisible
+- [x] Disclose the blast radius on save: `slideTheme()` resolves from `loadBrandKit()` at render time, so a kit edit retroactively restyles every post including ones already marked Exported, and nothing says so
+- [x] Give the five bare `<section>` elements real headings. Eleven controls, no sectioning, one Save button (`brand-kit-form.tsx`)
+- [x] Put the save confirmation in a live region. "Saved." is a plain `<span>` while the error branch two lines down has `role="alert"` (`brand-kit-form.tsx:281`)
+- [x] Resolve "Brand Kit" being an `h1` on `/brand` and an `h2` on `/dashboard:95`. The dashboard section is now "Your brand"
+
+The preview could not stay a server component and still update as you type, so
+`/api/templates/[kind]/png` gained an optional `kit` parameter carrying the
+unsaved kit. Anything the schema rejects, which is what a half-typed hex code
+looks like, falls back to the saved kit rather than erroring. The images are
+`unoptimized`: the kit changes on every edit, so an optimizer entry per
+keystroke would be pure waste.
+
+The four presets set fonts, colors, radius and all three styles, and
+deliberately leave name, handle, logo, avatar and voice alone, because those are
+the user's and not part of a look. Every preset clears AA on text against
+background.
+
+Contrast lives in `src/lib/contrast.ts`, pure and client-side so the warning
+appears as you type, with 10 unit tests including the canonical `#767676`
+reference pair. It warns rather than blocks: it is the user's brand.
+
+The blast-radius line uses the real post count, so it says "all 12 of your
+posts" rather than a vague warning, and notes that already-exported PNGs keep
+the old look.
 
 ---
 

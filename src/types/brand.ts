@@ -80,6 +80,56 @@ export const defaultBrandKit: BrandKit = {
 };
 
 /**
+ * Somewhere to start, because spec section 4 says this user is not good at
+ * graphic design and four raw hex fields is the wrong tool for that person.
+ * Each sets colors, fonts, radius and the three styles in one click, and every
+ * pair clears AA on text against background.
+ */
+export const brandPresets = [
+  {
+    id: "minimal-dark",
+    name: "Minimal dark",
+    description: "Near-black, one violet accent. Technical and quiet.",
+    fonts: { primary: "Space Grotesk", secondary: "IBM Plex Sans" },
+    colors: { background: "#0B0B0F", text: "#F5F5F7", accent: "#6E56CF", muted: "#8A8A96" },
+    style: { radius: 16, card: "flat", illustration: "line", codeBlock: "dark" },
+  },
+  {
+    id: "editorial-light",
+    name: "Editorial light",
+    description: "Warm paper and a serif headline. Reads like a magazine.",
+    fonts: { primary: "Playfair Display", secondary: "IBM Plex Sans" },
+    colors: { background: "#FBFAF7", text: "#16150F", accent: "#B4432A", muted: "#6B675C" },
+    style: { radius: 4, card: "outlined", illustration: "line", codeBlock: "light" },
+  },
+  {
+    id: "terminal",
+    name: "Terminal",
+    description: "Monospace throughout, square corners, phosphor green.",
+    fonts: { primary: "JetBrains Mono", secondary: "JetBrains Mono" },
+    colors: { background: "#0A0F0A", text: "#D7FFD9", accent: "#3BE370", muted: "#6F8A72" },
+    style: { radius: 0, card: "outlined", illustration: "none", codeBlock: "terminal" },
+  },
+  {
+    id: "warm",
+    name: "Warm",
+    description: "Soft cream, rounded corners, an orange accent.",
+    fonts: { primary: "Inter", secondary: "Inter" },
+    colors: { background: "#FFF6EC", text: "#2A1B10", accent: "#E2653C", muted: "#8A6B55" },
+    style: { radius: 24, card: "elevated", illustration: "flat", codeBlock: "light" },
+  },
+] as const satisfies readonly {
+  id: string;
+  name: string;
+  description: string;
+  fonts: BrandFonts;
+  colors: BrandColors;
+  style: BrandStyle;
+}[];
+
+export type BrandPreset = (typeof brandPresets)[number];
+
+/**
  * True while the seeded placeholder is untouched anywhere, so the UI can prompt
  * for setup. Compared across the whole kit: someone who picks colors, fonts and
  * a voice has set their brand up, whether or not they renamed it.

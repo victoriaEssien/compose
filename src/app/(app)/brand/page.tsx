@@ -1,6 +1,7 @@
 import { listAssets } from "@/server/assets";
 import { requireUserId } from "@/server/auth";
 import { loadBrandKit } from "@/server/brand";
+import { postMetrics } from "@/server/posts";
 import { BrandKitForm } from "./brand-kit-form";
 
 export default async function Page({
@@ -9,10 +10,11 @@ export default async function Page({
   searchParams: Promise<{ welcome?: string }>;
 }) {
   const userId = await requireUserId();
-  const [{ welcome }, kit, assets] = await Promise.all([
+  const [{ welcome }, kit, assets, metrics] = await Promise.all([
     searchParams,
     loadBrandKit(userId),
     listAssets(userId),
+    postMetrics(userId),
   ]);
 
   return (
@@ -25,7 +27,7 @@ export default async function Page({
       </p>
 
       <div className="mt-10">
-        <BrandKitForm initial={kit} assets={assets} />
+        <BrandKitForm initial={kit} assets={assets} postCount={metrics.generated} />
       </div>
     </main>
   );

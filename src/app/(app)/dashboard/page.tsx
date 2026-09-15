@@ -114,7 +114,7 @@ export default async function Page() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-sm font-medium">Brand Kit</h2>
+        <h2 className="text-sm font-medium">Your brand</h2>
         {needsBrandKit ? (
           <div className="mt-3">
             {firstRun ? (

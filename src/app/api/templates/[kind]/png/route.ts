@@ -3,7 +3,25 @@ import { loadBrandKit } from "@/server/brand";
 import { parseFormat } from "@/server/render/post";
 import { slidePng } from "@/server/render/slide";
 import { sampleSlides } from "@/templates/fixtures";
+import { brandKitSchema } from "@/types/brand";
+import type { BrandKit } from "@/types/brand";
 import { templateKindSchema } from "@/types/slide";
+
+/**
+ * An unsaved kit, so the Brand Kit page can preview edits through the real
+ * renderer instead of a hand-written stand-in. Anything unparseable falls back
+ * to the saved kit, which is what a half-typed hex code looks like.
+ */
+function draftKit(raw: string | null): BrandKit | null {
+  if (!raw) return null;
+
+  try {
+    const parsed = brandKitSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * One sample slide per template, in the signed-in user's own brand.
@@ -20,8 +38,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ kind
   const parsed = templateKindSchema.safeParse((await params).kind);
   if (!parsed.success) return new Response("Not found", { status: 404 });
 
-  const brand = await loadBrandKit(userId);
-  const format = parseFormat(new URL(request.url).searchParams.get("format"));
+  const url = new URL(request.url);
+  const draft = draftKit(url.searchParams.get("kit"));
+  const brand = draft ?? (await loadBrandKit(userId));
+  const format = parseFormat(url.searchParams.get("format"));
 
   const rendered = await slidePng(
     { content: sampleSlides[parsed.data], designConfig: null, imageUrl: null, index: 0 },
