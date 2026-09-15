@@ -27,7 +27,9 @@ const analysis: ContentAnalysis = {
 const structure = {
   hook: "If migrations are not part of your deploy, they get forgotten",
   body: null,
-  supportingPoints: [{ title: "Put it in the build", detail: "Migrations run before code serves." }],
+  supportingPoints: [
+    { title: "Put it in the build", detail: "Migrations run before code serves." },
+  ],
   conclusion: "Broken schema never reaches production.",
   cta: "Move your migrations into the build",
 };

@@ -29,16 +29,12 @@ import {
   reorderSlidesAction,
   saveSlideAction,
 } from "./actions";
+import { draftFor, draftSignature, serverSignature, shouldAutosave } from "./editor-state";
+import type { EditableSlide, SlideDraft } from "./editor-state";
 import { SlideDesign } from "./slide-design";
 import { SlideFields } from "./slide-fields";
 
-export type EditableSlide = {
-  id: string;
-  template: TemplateKind;
-  content: SlideSpec;
-  designConfig: SlideDesignConfig | null;
-  imageUrl: string | null;
-};
+export type { EditableSlide };
 
 const regenerateLabels: Record<RegenerateAction, string> = {
   rewrite: "Rewrite",
@@ -72,33 +68,36 @@ export function PostEditor({
   const index = Math.min(active, slides.length - 1);
   const slide = slides[index];
 
-  const [draft, setDraft] = useState<SlideSpec>(slide.content);
-  const [design, setDesign] = useState<SlideDesignConfig>(slide.designConfig ?? {});
+  // The draft carries the id of the slide it belongs to, so a save can never
+  // land on a different slide than the one it was typed into.
+  const [editing, setEditing] = useState<SlideDraft>(() => draftFor(slide));
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [instruction, setInstruction] = useState("");
   const [regenerateWith, setRegenerateWith] = useState<RegenerateAction>("rewrite");
   const [busy, startTransition] = useTransition();
 
+  const draft = editing.content;
+  const design = editing.design;
+
+  const fromServer = serverSignature(slide);
+  const synced = useRef(fromServer);
+
   // Adopt server state only when it differs from what this editor last sent,
   // so a refresh mid-edit cannot overwrite what is being typed.
-  const synced = useRef("");
-  const signature = `${slide.id}:${JSON.stringify(slide.content)}:${JSON.stringify(slide.designConfig)}`;
-
   useEffect(() => {
-    if (signature === synced.current) return;
-    synced.current = signature;
-    setDraft(slide.content);
-    setDesign(slide.designConfig ?? {});
-  }, [signature, slide]);
+    if (fromServer === synced.current && editing.id === slide.id) return;
+    synced.current = fromServer;
+    setEditing(draftFor(slide));
+  }, [fromServer, slide, editing.id]);
 
   // Autosave: the draft is the truth while typing, the server catches up after a pause.
   useEffect(() => {
-    if (draft === slide.content && design === (slide.designConfig ?? {})) return;
+    if (!shouldAutosave(editing, slide)) return;
 
     const timer = setTimeout(async () => {
       setStatus("Saving");
-      const result = await saveSlideAction(postId, slide.id, draft, design);
+      const result = await saveSlideAction(postId, editing.id, editing.content, editing.design);
 
       if (!result.ok) {
         setStatus(null);
@@ -106,14 +105,22 @@ export function PostEditor({
         return;
       }
 
-      synced.current = `${slide.id}:${JSON.stringify(draft)}:${JSON.stringify(Object.keys(design).length ? design : null)}`;
+      synced.current = draftSignature(editing);
       setError(null);
       setStatus("Saved");
       router.refresh();
     }, autosaveDelay);
 
     return () => clearTimeout(timer);
-  }, [draft, design, postId, slide, router]);
+  }, [editing, postId, slide, router]);
+
+  function setDraft(content: SlideSpec) {
+    setEditing((current) => ({ ...current, content }));
+  }
+
+  function setDesign(design: SlideDesignConfig) {
+    setEditing((current) => ({ ...current, design }));
+  }
 
   function run(work: () => Promise<{ ok: boolean; error: string | null }>) {
     startTransition(async () => {
