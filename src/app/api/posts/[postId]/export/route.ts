@@ -4,6 +4,7 @@ import { currentUserId } from "@/server/auth";
 import { markExported } from "@/server/posts";
 import { loadRenderablePost, parseFormat } from "@/server/render/post";
 import { slidePng } from "@/server/render/slide";
+import { hasPlaceholderHandle } from "@/types/brand";
 
 function slugify(title: string) {
   return (
@@ -22,6 +23,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ post
   const { postId } = await params;
   const found = await loadRenderablePost(userId, postId);
   if (!found) return new Response("Not found", { status: 404 });
+
+  // Refusing the download beats handing over PNGs signed @yourhandle, which
+  // cannot be fixed without regenerating every file.
+  if (hasPlaceholderHandle(found.brand)) {
+    return new Response("Set your handle in the Brand Kit before exporting.", { status: 409 });
+  }
 
   const format = parseFormat(new URL(request.url).searchParams.get("format"));
 

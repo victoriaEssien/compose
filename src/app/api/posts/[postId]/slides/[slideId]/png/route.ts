@@ -1,7 +1,7 @@
 import { currentUserId } from "@/server/auth";
-import { markExported } from "@/server/posts";
 import { loadRenderablePost, parseFormat } from "@/server/render/post";
 import { slidePng } from "@/server/render/slide";
+import { hasPlaceholderHandle } from "@/types/brand";
 
 export async function GET(
   request: Request,
@@ -17,8 +17,13 @@ export async function GET(
   const index = found.slides.findIndex((row) => row.id === slideId);
   if (index < 0) return new Response("Not found", { status: 404 });
 
-  await markExported(userId, postId);
+  // The handle is drawn into the footer, so a placeholder would ship in the file.
+  if (hasPlaceholderHandle(found.brand)) {
+    return new Response("Set your handle in the Brand Kit before downloading.", { status: 409 });
+  }
 
+  // Deliberately does not mark the post exported. Downloading one slide is how
+  // you inspect it, and inspecting a draft should not move it out of Drafts.
   return slidePng(
     found.inputs[index],
     found.brand,

@@ -83,10 +83,18 @@ than one shared "Working".
 Three separate first impressions are broken, and two of them ship a defect into
 a file the user downloads.
 
+**Status: done.** `pnpm typecheck`, `pnpm lint` and `pnpm test` (223 passing,
+5 new) all green.
+
 ### 2.1 Landing page
 
-- [ ] Replace the placeholder at `/` with a redirect: signed in to `/dashboard`, otherwise `/sign-in` (`src/app/page.tsx:8-16`). It currently ships the string "Boilerplate is ready; see tasks.md to start building" to production
-- [ ] **[BLOCKED]** Build the real landing page. See [D7](#d7-landing-page-redirect-only-or-a-real-page)
+- [x] Replace the placeholder at `/` with a redirect: signed in to `/dashboard`, otherwise `/sign-in` (`src/app/page.tsx:8-16`). It currently ships the string "Boilerplate is ready; see tasks.md to start building" to production
+- [x] Build the real landing page. **D7 was answered "build it"**, so `/` is now a Persuade surface: the spec section 2 before/after as two columns, how it works, and the Brand Kit promise. Signed-in visitors still redirect to `/dashboard`
+
+The three slides in the hero are **real renderer output**, not screenshots. They
+come from `templates/fixtures.ts` through `SlidePreview` with a demo Brand Kit
+defined in the page, so the landing page cannot show something the product does
+not actually produce.
 
 ### 2.2 The placeholder handle in exported PNGs
 
@@ -94,17 +102,38 @@ a file the user downloads.
 draws it in the footer of every slide (`primitives.tsx:71-83`). Nothing checks.
 A new user's first carousel exports with it burned into all six PNGs.
 
-- [ ] Rewrite `isDefaultBrandKit` to deep-compare the whole kit. It currently compares only `name` and `username`, so a fully configured kit whose name is still "Your brand" reports as not set up (`types/brand.ts:83-85`)
-- [ ] Warn, do not block, on `/posts/new` when the kit is still seeded: "Your posts will be signed @yourhandle"
-- [ ] Block the export routes on a still-default `username`, or substitute the account name (`api/posts/[postId]/export/route.ts`, `api/posts/[postId]/slides/[slideId]/png/route.ts`)
-- [ ] Redirect new users to `/brand` once after sign-up. Better Auth already seeds the kit in the `user.create.after` hook
+- [x] Rewrite `isDefaultBrandKit` to deep-compare the whole kit. It currently compares only `name` and `username`, so a fully configured kit whose name is still "Your brand" reports as not set up (`types/brand.ts:83-85`)
+- [x] Warn, do not block, on `/posts/new` when the kit is still seeded: "Your posts will be signed @yourhandle"
+- [x] Block the export routes on a still-default `username`, or substitute the account name (`api/posts/[postId]/export/route.ts`, `api/posts/[postId]/slides/[slideId]/png/route.ts`)
+- [x] Redirect new users to `/brand` once after sign-up. Better Auth already seeds the kit in the `user.create.after` hook
+- [x] Pulled forward from Round 3.6: the single-slide PNG route no longer calls `markExported`. Downloading one slide is how you inspect it, and inspecting a draft should not move it out of Drafts
+
+Blocking beat substituting the account name: a substituted handle is still not
+the handle you meant, and you would not find out until the PNGs were on disk.
+Both routes return 409 with a plain sentence. New `hasPlaceholderHandle` is
+checked separately from `isDefaultBrandKit`, because the handle is the only
+field that makes a downloaded file unpublishable. Both are unit-tested in
+`src/types/brand.test.ts`.
 
 ### 2.3 First run
 
-- [ ] Order the dashboard's two competing CTAs. Brand Kit should come before first post, and nothing currently says so (`dashboard/page.tsx:79-103`)
-- [ ] Give `empty-state.tsx` a visual. Three dashed boxes can stack on an empty dashboard with no illustration and no example
-- [ ] Add a "Try this example" button that prefills `create-post-form` with the debugging paragraph from spec section 7
-- [ ] **[BLOCKED]** Password reset. See [D5](#d5-password-reset-needs-email-infrastructure)
+- [x] Order the dashboard's two competing CTAs. Brand Kit should come before first post, and nothing currently says so (`dashboard/page.tsx:79-103`)
+- [x] Give `empty-state.tsx` a visual. Three dashed boxes can stack on an empty dashboard with no illustration and no example
+- [x] Add a "Try this example" button that prefills `create-post-form` with the debugging paragraph from spec section 7
+- [x] Password reset. **D5 was answered "add it"**
+
+On a genuinely new account the dashboard now leads with a single primary "Start
+here" Brand Kit step, demotes Create Post to outline, and the Brand Kit section
+lower down just points back up instead of repeating the same dashed box a third
+time. New accounts land on `/brand?welcome=1`, which retitles the page for that
+one visit.
+
+Password reset added `resend` plus two optional env vars. **Without
+`RESEND_API_KEY` the reset link is written to the server log**, so local
+development has a working flow and a misconfigured deployment fails visibly
+rather than swallowing the link. The request path reports the same result
+whether or not the address exists, so it cannot be used to enumerate accounts.
+New route: `/reset-password`.
 
 ---
 
@@ -212,15 +241,15 @@ association.
 
 ### 7.2 Errors and state
 
-- [ ] Set `aria-invalid` and `aria-describedby` on over-limit fields. Neither attribute is set at a single call site in the codebase (`create-post-form.tsx:86,95,155`, `slide-fields.tsx:34,39,47`)
-- [ ] Stop signalling over-limit by color alone. The counter text is identical in both states (`slide-fields.tsx:34`, `create-post-form.tsx:95`)
+- [ ] Set `aria-invalid` and `aria-describedby` on over-limit fields. Neither attribute is set at a single call site in the codebase (`create-post-form.tsx:86,95,155`, `slide-fields.tsx:34,39,47`). **Partly done in Round 2**: `create-post-form` and the new reset-password form carry both. `slide-fields` still does not
+- [ ] Stop signalling over-limit by color alone. The counter text is identical in both states (`slide-fields.tsx:34`, `create-post-form.tsx:95`). **Partly done in Round 2**: the Create Post counter now changes its wording when over, not just its color. `slide-fields` still does not
 - [ ] Label the regenerate action `Select` and the free-text `Input` under it. These are the only unlabelled controls in the app (`post-editor.tsx:356`, `:368-372`)
 - [ ] Announce sign-out (`sign-out-button.tsx:22`) and post status changes (`post-status.tsx`)
 
 ### 7.3 Structure
 
-- [ ] Give `/sign-in` an `h1`. `CardTitle` renders a `div` (`sign-in-form.tsx:53`, `ui/card.tsx:30-34`)
-- [ ] Fix the dangling `aria-controls`. `sign-in-form.tsx:57-107` uses `Tabs` and `TabsTrigger` with no `TabsContent`, so both triggers point at panels that do not exist
+- [x] Give `/sign-in` an `h1`. `CardTitle` renders a `div` (`sign-in-form.tsx:53`, `ui/card.tsx:30-34`). Done in Round 2, since the file was being rewritten for password reset
+- [x] Fix the dangling `aria-controls`. `sign-in-form.tsx:57-107` uses `Tabs` and `TabsTrigger` with no `TabsContent`, so both triggers point at panels that do not exist. Done in Round 2: the form now lives inside `TabsContent`
 - [ ] Add a skip-to-content link. There are zero in the codebase
 - [ ] Give the slide strip a real role. It is N buttons with `aria-current`, a nav pattern applied to non-nav content (`post-editor.tsx:157-175`)
 - [ ] Label the brand color swatches on the dashboard. Three `size-6` circles with no text and no `aria-label` (`dashboard/page.tsx:109-119`)
@@ -258,13 +287,13 @@ association.
 
 ### 10.1 Copy
 
-- [ ] Move `postTypeLabels` to `src/types/post.ts` and use it on the post page, which currently prints the raw enum lowercase as "things i learned" (`posts/[postId]/page.tsx:53`, `create-post-form.tsx:19-28`)
+- [ ] Move `postTypeLabels` to `src/types/post.ts` and use it on the post page, which currently prints the raw enum lowercase as "things i learned" (`posts/[postId]/page.tsx:53`, `create-post-form.tsx:19-28`). **Half done in Round 2**: `postTypeLabels` and `toneLabels` now live in `types/post.ts`. The post page still prints the raw enum
 - [ ] Change the format toggle to "Carousel" and "Square" with the ratios as secondary text (`posts/[postId]/page.tsx:60-77`)
 - [ ] Settle Title Case versus sentence case. "Your Content", "My Assets", "Recent Posts", "Save Brand Kit" against "Create a post", "Regenerate this slide", "Choose an asset", "Welcome back"
 - [ ] Settle Delete versus Remove. Both describe permanent deletion and nothing distinguishes them (`post-editor.tsx:238,313,336`, `asset-list.tsx:83`, `slide-fields.tsx:142`)
 - [ ] Settle the one feature named three ways: nav "Create Post", dashboard CTA "Create Post", page `h1` "Create a post", submit button "Generate"
 - [ ] Make the regenerate action labels parallel. They currently mix verb-first ("Rewrite", "Change layout") with adjective-phrase ("Make shorter", "More technical") (`post-editor.tsx:41-48`)
-- [ ] Remove the en-GB leakage: "Centre" as a label setting the value `"center"` (`slide-design.tsx:78,86`), `aria-label` "Background colour" beside "Background color picker" for the identical control (`slide-design.tsx:39`, `brand-kit-form.tsx:167`), "emphasise" (`create-post-form.tsx:105`)
+- [ ] Remove the en-GB leakage: "Centre" as a label setting the value `"center"` (`slide-design.tsx:78,86`), `aria-label` "Background colour" beside "Background color picker" for the identical control (`slide-design.tsx:39`, `brand-kit-form.tsx:167`), ~~"emphasise" (`create-post-form.tsx:105`)~~ fixed in Round 2
 - [ ] Make ellipses consistent. Every pending label uses "..." except the `aria-live` status, which renders bare "Working" and "Saving" (`post-editor.tsx:100,111,252`)
 
 ### 10.2 Hierarchy
@@ -299,11 +328,15 @@ association.
 
 ## Decisions needed
 
-Every item here is either banned by the spec, parked in the Backlog, or absent
-from the plan entirely. Each carries a recommendation. Nothing blocked on these
-is started until they are answered.
+**All eight were answered on 2026-09-15.** Seven went with the recommendation
+below; D7 went further and asked for a real landing page rather than just the
+redirect. Nothing in this file is blocked any more.
 
-### D1: drag to reorder vs the "no drag-and-drop" ban
+Every item here is either banned by the spec, parked in the Backlog, or absent
+from the plan entirely. The recommendations are kept as the record of why each
+went the way it did.
+
+### D1: drag to reorder vs the "no drag-and-drop" ban. ANSWERED: build it
 
 Spec section 23 excludes a "Complex drag-and-drop editor" from the MVP and
 section 13 says "The user should not need a full Canva-like editor."
@@ -317,7 +350,7 @@ order" as a required editor capability. The current implementation costs one
 click and one full page refresh per position. I would not treat a one-axis list
 reorder as the thing section 23 was protecting against.
 
-### D2: save a design as a reusable template
+### D2: save a design as a reusable template. ANSWERED: do it, after Round 4
 
 Spec section 15, parked in the Backlog at `tasks.md:123`.
 
@@ -329,7 +362,7 @@ already exist and the `template` table is already in the schema. The reason to
 wait for Round 4 is that the Brand Kit should tell the truth before users start
 saving looks derived from it.
 
-### D3: caption generation at the export moment
+### D3: caption generation at the export moment. ANSWERED: do it
 
 Spec section 20, parked in the Backlog at `tasks.md:124`, and explicitly tied
 there to publishing, which is not being built.
@@ -344,7 +377,7 @@ phone, and writes the caption from scratch with the product's involvement
 already over. A caption in the completion panel is the cheapest thing on this
 whole list that moves that metric.
 
-### D4: streaming generation
+### D4: streaming generation. ANSWERED: stage reporting now
 
 Not in `tasks.md` at all, in any phase or the Backlog.
 
@@ -355,7 +388,7 @@ the first validated slide would turn a 20-second dead wait into roughly a
 6-second first paint, but it means restructuring `planDesign` and the
 persistence path, so it deserves its own decision rather than being smuggled in.
 
-### D5: password reset (needs email infrastructure)
+### D5: password reset (needs email infrastructure). ANSWERED: add it. Done in Round 2
 
 The sign-in decision at `tasks.md:117` settled on email and password only. That
 decision did not consider recovery, and there is no reset link anywhere in the
@@ -369,7 +402,7 @@ fit for this stack) plus one env var. That is genuinely new infrastructure, so
 it is your call, but shipping an email-and-password product with no reset is not
 a position I would defend.
 
-### D6: dark mode, wire it or delete it
+### D6: dark mode, wire it or delete it. ANSWERED: wire it
 
 `globals.css:131-150` defines a complete dark palette and `globals.css:4`
 defines the variant. Nothing ever applies `.dark`. There is no ThemeProvider,
@@ -384,7 +417,7 @@ a user on a dark OS currently gets a white app whose default Brand Kit is
 `#0B0B0F`, which is jarring either way. But deleting working tokens to avoid a
 provider is the worse trade.
 
-### D7: landing page, redirect only or a real page
+### D7: landing page, redirect only or a real page. ANSWERED: build the real page
 
 The spec has no marketing surface. Nothing bans one.
 
@@ -395,7 +428,7 @@ you, and spec section 35 says the first user is the creator herself. If this
 stays personal, the redirect is the whole answer and a landing page is wasted
 work.
 
-### D8: does Compose get a visual identity of its own
+### D8: does Compose get a visual identity of its own. ANSWERED: neutral chrome, bold moments
 
 The app palette is chroma zero on every token except `--destructive`. There are
 no icons. The type scale is two effective steps.

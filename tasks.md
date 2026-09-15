@@ -123,7 +123,7 @@ focus rings, touch targets, motion and error association, and the editor still
 overflows at 390px. Rounds 7 and 8 of `review-round1.md` finish it.
 
 - [x] Round 1: stop losing user work (autosave flush, confirmations, undo)
-- [ ] Round 2: the front door (landing redirect, `@yourhandle` in exports, first run)
+- [x] Round 2: the front door (landing redirect, `@yourhandle` in exports, first run)
 - [ ] Round 3: show the work (thumbnails, filmstrip, template grid, export completion)
 - [ ] Round 4: the Brand Kit (real preview, starter palettes, contrast check)
 - [ ] Round 5: the generation wait (stage reporting, skeleton, cancel)

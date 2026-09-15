@@ -10,6 +10,7 @@ import { env } from "@/lib/env";
 import { seedBrandKit } from "./brand";
 import { db } from "./db/client";
 import * as schema from "./db/schema";
+import { passwordResetMail, sendMail } from "./email";
 
 /**
  * Vercel gives every deployment its own hostname, so a single BETTER_AUTH_URL
@@ -29,7 +30,15 @@ export const auth = betterAuth({
   secret: env().BETTER_AUTH_SECRET,
   trustedOrigins: vercelOrigins(),
   database: drizzleAdapter(db(), { provider: "pg", schema }),
-  emailAndPassword: { enabled: true, minPasswordLength: 8 },
+  emailAndPassword: {
+    enabled: true,
+    minPasswordLength: 8,
+    // Email and password is the only way in, so without this a forgotten
+    // password locks the account permanently.
+    sendResetPassword: async ({ user, url }) => {
+      await sendMail({ to: user.email, ...passwordResetMail(url) });
+    },
+  },
   databaseHooks: {
     user: { create: { after: async (created) => seedBrandKit(created.id) } },
   },

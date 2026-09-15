@@ -79,7 +79,20 @@ export const defaultBrandKit: BrandKit = {
   voice: null,
 };
 
-/** True while the seeded placeholder is untouched, so the UI can prompt for setup. */
+/**
+ * True while the seeded placeholder is untouched anywhere, so the UI can prompt
+ * for setup. Compared across the whole kit: someone who picks colors, fonts and
+ * a voice has set their brand up, whether or not they renamed it.
+ */
 export function isDefaultBrandKit(kit: BrandKit) {
-  return kit.name === defaultBrandKit.name && kit.username === defaultBrandKit.username;
+  return JSON.stringify(brandKitSchema.parse(kit)) === JSON.stringify(defaultBrandKit);
+}
+
+/**
+ * The handle is drawn into the footer of every slide, so this one placeholder
+ * survives into the exported PNG. Checked separately from the rest of the kit
+ * because it is the only field that makes a file unpublishable.
+ */
+export function hasPlaceholderHandle(kit: BrandKit) {
+  return kit.username.trim() === defaultBrandKit.username;
 }

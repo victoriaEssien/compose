@@ -41,6 +41,8 @@ export default async function Page() {
   ]);
 
   const summary = metricsLine(metrics);
+  const needsBrandKit = isDefaultBrandKit(brandKit);
+  const firstRun = needsBrandKit && recent.length === 0 && drafts.length === 0;
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
@@ -49,10 +51,28 @@ export default async function Page() {
           <h1 className="text-2xl font-semibold">Your Content</h1>
           {summary && <p className="text-muted-foreground mt-1 text-xs">{summary}</p>}
         </div>
-        <Button asChild>
+        <Button asChild variant={firstRun ? "outline" : "default"}>
           <Link href="/posts/new">Create Post</Link>
         </Button>
       </div>
+
+      {/*
+        On a brand new account both calls to action are empty states, and nothing
+        said which came first. The Brand Kit does: it signs every slide.
+      */}
+      {firstRun && (
+        <section className="mt-10">
+          <h2 className="text-sm font-medium">Start here</h2>
+          <div className="mt-3">
+            <EmptyState
+              title="Set up your Brand Kit first"
+              description="Fonts, colors and voice live here, and every post Compose generates follows them. It takes a minute, and it is what makes your posts look like yours."
+              action={{ href: "/brand", label: "Set up your Brand Kit" }}
+              primary
+            />
+          </div>
+        </section>
+      )}
 
       {drafts.length > 0 && (
         <section className="mt-10">
@@ -81,11 +101,13 @@ export default async function Page() {
               description={
                 drafts.length
                   ? "Posts show up here once you mark them ready or download them."
-                  : "Paste a rough idea, a project update or something you learned, and Compose will turn it into a carousel."
+                  : "Paste a rough idea, a project update or something you learned, and Compose will turn it into a carousel. There is an example on the Create Post screen if you want to watch it work first."
               }
               action={
                 drafts.length ? undefined : { href: "/posts/new", label: "Create your first post" }
               }
+              primary={!firstRun && drafts.length === 0}
+              visual={drafts.length === 0}
             />
           </div>
         )}
@@ -93,13 +115,19 @@ export default async function Page() {
 
       <section className="mt-10">
         <h2 className="text-sm font-medium">Brand Kit</h2>
-        {isDefaultBrandKit(brandKit) ? (
+        {needsBrandKit ? (
           <div className="mt-3">
-            <EmptyState
-              title="Your Brand Kit is not set up"
-              description="Fonts, colors and voice live here. Every post Compose generates follows them."
-              action={{ href: "/brand", label: "Set up your Brand Kit" }}
-            />
+            {firstRun ? (
+              <p className="text-muted-foreground rounded-lg border border-dashed px-6 py-6 text-center text-sm">
+                Waiting for you at the top of this page.
+              </p>
+            ) : (
+              <EmptyState
+                title="Your Brand Kit is not set up"
+                description="Fonts, colors and voice live here. Every post Compose generates follows them, and your handle is drawn on every slide."
+                action={{ href: "/brand", label: "Set up your Brand Kit" }}
+              />
+            )}
           </div>
         ) : (
           <Link

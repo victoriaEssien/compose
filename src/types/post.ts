@@ -24,6 +24,21 @@ export type PostType = z.infer<typeof postTypeSchema>;
 export const postTypeRequestSchema = z.enum([...postTypes, "auto"]);
 export type PostTypeRequest = z.infer<typeof postTypeRequestSchema>;
 
+/**
+ * Lives here rather than on the Create Post screen, because the post page needs
+ * the same labels and was printing the raw enum lowercase instead.
+ */
+export const postTypeLabels: Record<PostTypeRequest, string> = {
+  auto: "Auto",
+  educational: "Educational",
+  tutorial: "Tutorial",
+  project_showcase: "Project showcase",
+  things_i_learned: "Things I learned",
+  opinion: "Opinion",
+  tool_recommendation: "Tool recommendation",
+  story: "Story",
+};
+
 export const postStatuses = ["draft", "ready", "exported"] as const;
 export const postStatusSchema = z.enum(postStatuses);
 export type PostStatus = z.infer<typeof postStatusSchema>;
@@ -47,6 +62,22 @@ export type PostSpec = z.infer<typeof postSpecSchema>;
 
 /** Offered on the Create Post screen. Null means "use the brand voice". */
 export const tonePresets = ["direct", "technical", "friendly", "playful", "serious"] as const;
+
+export const toneLabels: Record<(typeof tonePresets)[number] | "brand", string> = {
+  brand: "Your brand voice",
+  direct: "Direct",
+  technical: "Technical",
+  friendly: "Friendly",
+  playful: "Playful",
+  serious: "Serious",
+};
+
+/**
+ * Prefills the Create Post screen so the first run is not an empty box. The
+ * paragraph is the one from spec section 7.
+ */
+export const exampleContent =
+  "I spent the last two days debugging this API and eventually realised the problem wasn't the API at all. I was making three database calls where one would have been enough. The fix was a single join and about four lines of code, but finding it meant reading the query log line by line.";
 
 /** What the Create Post screen submits (spec section 22). */
 export const generatePostInputSchema = z.object({

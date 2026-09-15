@@ -12,29 +12,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { postTypes, tonePresets } from "@/types/post";
+import { exampleContent, postTypeLabels, postTypes, toneLabels, tonePresets } from "@/types/post";
 import type { PostTypeRequest } from "@/types/post";
 import { createPostAction } from "./actions";
-
-const postTypeLabels = {
-  auto: "Auto",
-  educational: "Educational",
-  tutorial: "Tutorial",
-  project_showcase: "Project showcase",
-  things_i_learned: "Things I learned",
-  opinion: "Opinion",
-  tool_recommendation: "Tool recommendation",
-  story: "Story",
-} as const;
-
-const toneLabels = {
-  brand: "Your brand voice",
-  direct: "Direct",
-  technical: "Technical",
-  friendly: "Friendly",
-  playful: "Playful",
-  serious: "Serious",
-} as const;
 
 // The same bounds generatePostInputSchema enforces, shown before you hit Generate.
 const minContent = 20;
@@ -82,7 +62,20 @@ export function CreatePostForm() {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-6">
       <div className="grid gap-2">
-        <Label htmlFor="content">What do you want to talk about?</Label>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <Label htmlFor="content">What do you want to talk about?</Label>
+          {content.length === 0 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={pending}
+              onClick={() => setContent(exampleContent)}
+            >
+              Try an example
+            </Button>
+          )}
+        </div>
         <Textarea
           id="content"
           rows={10}
@@ -90,10 +83,17 @@ export function CreatePostForm() {
           value={content}
           onChange={(event) => setContent(event.target.value)}
           disabled={pending}
+          aria-invalid={tooLong || undefined}
+          aria-describedby="contentCount"
           required
         />
-        <p className={tooLong ? "text-destructive text-xs" : "text-muted-foreground text-xs"}>
-          {length} / {maxContent} characters. Compose works best with a few sentences of detail.
+        <p
+          id="contentCount"
+          className={tooLong ? "text-destructive text-xs" : "text-muted-foreground text-xs"}
+        >
+          {tooLong
+            ? `${length - maxContent} characters over the ${maxContent} limit. Trim it down.`
+            : `${length} / ${maxContent} characters. Compose works best with a few sentences of detail.`}
         </p>
       </div>
 
@@ -102,7 +102,7 @@ export function CreatePostForm() {
         <Textarea
           id="context"
           rows={3}
-          placeholder="Optional. Who this is for, what to emphasise, what to leave out."
+          placeholder="Optional. Who this is for, what to emphasize, what to leave out."
           value={context}
           onChange={(event) => setContext(event.target.value)}
           disabled={pending}
