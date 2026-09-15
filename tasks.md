@@ -18,7 +18,7 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 - [x] Spec in `docs/spec.md`, this task list
 - [x] `pnpm install`, `git init`, first commit, push to GitHub (personal account)
 - [x] Create a Postgres database (Neon) and fill in `.env.local`
-- [ ] Create a Vercel Blob store and add `BLOB_READ_WRITE_TOKEN`
+- [x] Create a Vercel Blob store and add `BLOB_READ_WRITE_TOKEN` (public access, iad1)
 - [x] Add the shadcn components needed early: `pnpm dlx shadcn@latest add input textarea label select card dialog dropdown-menu tabs sonner skeleton`
 
 ## Phase 1: Data model and shared schemas
@@ -46,12 +46,12 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 - [x] App navigation in `(app)/layout.tsx`: Dashboard, Create Post, Brand Kit, Assets
 - [x] Dashboard (spec section 21): Create Post button, Recent Posts, Drafts, Brand Kit link. No analytics
 - [x] Empty states for no posts / no brand kit
-- [x] Brand Kit form (spec section 10): name, username, logo, avatar, fonts, colors, radius, card style, illustration style, code block style. Logo and avatar are URL fields until the asset picker lands
+- [x] Brand Kit form (spec section 10): name, username, logo, avatar, fonts, colors, radius, card style, illustration style, code block style
 - [x] Brand voice field (spec section 27)
 - [x] Seed a default Brand Kit on first sign-in (Better Auth `user.create.after` hook)
 - [x] Live brand preview using a sample slide. Stubbed with plain CSS until the Phase 6 renderer exists
 - [x] Upload service (`src/server/storage/`) wrapping Vercel Blob: type and size limits, per-user paths
-- [x] Assets page (spec section 16): upload, list, rename, delete. Written but the upload path is unverified until the Blob store exists
+- [x] Assets page (spec section 16): upload, list, rename, delete
 - [x] Asset picker component, used by the Brand Kit logo and avatar fields and reusable in the editor
 
 ## Phase 4: AI pipeline
