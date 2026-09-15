@@ -288,12 +288,29 @@ the old look.
 Three sequential model calls, roughly 20 seconds, and the client is told
 nothing beyond one static sentence.
 
-- [ ] Report the pipeline stage. `generate-post.ts:22-24` runs analyze, then structure, then plan, and the server knows exactly where it is (`create-post-form.tsx:161-168`)
-- [ ] Use `ui/skeleton.tsx` during the wait. It was installed in Phase 0 for this and is never imported anywhere
-- [ ] Let the user cancel
-- [ ] Handle the retry case. `structured.ts` retries once on invalid output, which doubles the wait while the UI still says "About 20 seconds"
-- [ ] Persist something when the tab closes mid-generation. The model calls complete server-side and are discarded with no trace (`create-post-form.tsx:69-79`)
-- [ ] **[BLOCKED]** Stream the first slide. See [D4](#d4-streaming-generation)
+**Status: done.** `pnpm typecheck`, `pnpm lint`, `pnpm test` (240 passing, 2
+new) and `pnpm build` all green.
+
+- [x] Report the pipeline stage. `generate-post.ts:22-24` runs analyze, then structure, then plan, and the server knows exactly where it is (`create-post-form.tsx:161-168`)
+- [x] Use `ui/skeleton.tsx` during the wait. It was installed in Phase 0 for this and is never imported anywhere
+- [x] Let the user cancel
+- [x] Persist something when the tab closes mid-generation. The model calls complete server-side and are discarded with no trace (`create-post-form.tsx:69-79`)
+- [x] Stream the stages. **D4 was answered "stage reporting now"**
+- [ ] Streaming the first validated _slide_, rather than the stages, is still open. It would turn the 20 second wait into roughly a 6 second first paint but means restructuring `planDesign` and the persistence path
+- [ ] The retry case. `structured.ts` retries once on invalid output, which doubles the wait. The stage list no longer claims a fixed duration, so this is less misleading than it was, but a retry still looks like a stall
+
+`generatePost` now takes an `onStage` callback, and the work moved from a server
+action to `POST /api/posts/generate`, which streams newline-delimited JSON: one
+event per stage, then the outcome. A server action had nowhere to put progress,
+which is why the client showed one static sentence for the whole wait.
+
+Three things fall out of that. The user can **cancel**, through an
+`AbortController`. The **draft is written before the final event**, so closing
+the tab mid-generation now leaves a post rather than discarding paid-for model
+calls. And the stage list is honest: it names what is running, rather than
+guessing at elapsed time.
+
+`posts/new/actions.ts` was deleted; the route replaces it.
 
 ---
 

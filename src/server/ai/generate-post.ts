@@ -15,13 +15,23 @@ export type GeneratedPost = {
   spec: PostSpec;
 };
 
+/** The three model calls, so a caller can say which one is running. */
+export const generateStages = ["analyze", "structure", "plan"] as const;
+export type GenerateStage = (typeof generateStages)[number];
+
 export async function generatePost(
   input: GeneratePostInput,
   brand: BrandKit,
   provider: AiProvider = openAiProvider(),
+  onStage?: (stage: GenerateStage) => void,
 ): Promise<GeneratedPost> {
+  onStage?.("analyze");
   const analysis = await analyzeContent(provider, input, brand);
+
+  onStage?.("structure");
   const structure = await structureContent(provider, input, analysis, brand);
+
+  onStage?.("plan");
   const spec = await planDesign(provider, input, analysis, structure, brand);
 
   return { analysis, structure, spec };

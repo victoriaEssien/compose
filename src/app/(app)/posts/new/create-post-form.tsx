@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -12,27 +13,48 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { exampleContent, postTypeLabels, postTypes, toneLabels, tonePresets } from "@/types/post";
 import type { PostTypeRequest } from "@/types/post";
-import { createPostAction } from "./actions";
+
+/** The stages the stream reports, in the order they happen. */
+const stageCopy = {
+  analyze: "Reading what you wrote",
+  structure: "Finding the hook and the shape",
+  plan: "Choosing a layout for every slide",
+  save: "Saving the draft",
+} as const;
+
+type Stage = keyof typeof stageCopy;
+
+const stageOrder = Object.keys(stageCopy) as Stage[];
 
 // The same bounds generatePostInputSchema enforces, shown before you hit Generate.
 const minContent = 20;
 const maxContent = 6000;
 
 export function CreatePostForm() {
+  const router = useRouter();
   const [content, setContent] = useState("");
   const [context, setContext] = useState("");
   const [postType, setPostType] = useState<PostTypeRequest>("auto");
   const [tone, setTone] = useState<keyof typeof toneLabels>("brand");
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [stage, setStage] = useState<Stage | null>(null);
+  const abort = useRef<AbortController | null>(null);
 
+  const pending = stage !== null;
   const length = content.trim().length;
   const tooShort = length < minContent;
   const tooLong = length > maxContent;
 
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function cancel() {
+    abort.current?.abort();
+    abort.current = null;
+    setStage(null);
+  }
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
 
@@ -46,17 +68,65 @@ export function CreatePostForm() {
       return;
     }
 
-    startTransition(async () => {
-      // A success redirects, so anything that comes back is a failure.
-      const result = await createPostAction({
-        content: content.trim(),
-        context: context.trim() || null,
-        postType,
-        tone: tone === "brand" ? null : tone,
+    const controller = new AbortController();
+    abort.current = controller;
+    setStage("analyze");
+
+    try {
+      const response = await fetch("/api/posts/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          content: content.trim(),
+          context: context.trim() || null,
+          postType,
+          tone: tone === "brand" ? null : tone,
+        }),
       });
 
-      setError(result.error);
-    });
+      if (!response.body) {
+        setError("Generation failed. Check your connection and try again.");
+        setStage(null);
+        return;
+      }
+
+      // Newline-delimited JSON: one event per stage, then the outcome.
+      const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+      let buffer = "";
+
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += value;
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const event = JSON.parse(line);
+
+          if ("stage" in event) setStage(event.stage);
+          else if (event.ok) {
+            router.push(`/posts/${event.postId}`);
+            return;
+          } else {
+            setError(event.error);
+            setStage(null);
+            return;
+          }
+        }
+      }
+
+      setStage(null);
+    } catch (failure) {
+      // An abort is the user cancelling, which cancel() has already handled.
+      if (!(failure instanceof DOMException && failure.name === "AbortError")) {
+        setError("Generation failed. Check your connection and try again.");
+        setStage(null);
+      }
+    }
   }
 
   return (
@@ -157,16 +227,66 @@ export function CreatePostForm() {
         </p>
       )}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" disabled={pending || tooShort || tooLong}>
           {pending ? "Generating..." : "Generate"}
         </Button>
         {pending && (
-          <span aria-live="polite" className="text-muted-foreground text-sm">
-            Reading your content, structuring it and planning the slides. About 20 seconds.
-          </span>
+          <Button type="button" variant="ghost" onClick={cancel}>
+            Cancel
+          </Button>
         )}
       </div>
+
+      {pending && stage && (
+        <div className="grid gap-5 rounded-lg border p-5">
+          <ol className="grid gap-2">
+            {stageOrder.map((step, at) => {
+              const current = stageOrder.indexOf(stage);
+              const state = at < current ? "done" : at === current ? "now" : "next";
+
+              return (
+                <li
+                  key={step}
+                  className={
+                    state === "next"
+                      ? "text-muted-foreground/50 flex items-center gap-2.5 text-sm"
+                      : "flex items-center gap-2.5 text-sm"
+                  }
+                >
+                  <span
+                    aria-hidden="true"
+                    className={
+                      state === "done"
+                        ? "bg-foreground size-1.5 shrink-0 rounded-full"
+                        : state === "now"
+                          ? "bg-foreground size-1.5 shrink-0 animate-pulse rounded-full"
+                          : "bg-muted-foreground/40 size-1.5 shrink-0 rounded-full"
+                    }
+                  />
+                  {stageCopy[step]}
+                </li>
+              );
+            })}
+          </ol>
+
+          <p aria-live="polite" className="sr-only">
+            {stageCopy[stage]}
+          </p>
+
+          {/* The slide count is not known yet, but the shape of the result is. */}
+          <div aria-hidden="true" className="flex gap-2">
+            {[0, 1, 2].map((at) => (
+              <Skeleton key={at} className="aspect-[4/5] w-14 rounded-md" />
+            ))}
+          </div>
+
+          <p className="text-muted-foreground text-xs text-pretty">
+            Around twenty seconds in total. You can cancel, and the draft is saved as soon as it
+            exists, so closing this tab will not lose it.
+          </p>
+        </div>
+      )}
     </form>
   );
 }

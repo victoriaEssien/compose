@@ -92,6 +92,26 @@ describe("generatePost", () => {
     expect(result.spec.slides).toHaveLength(3);
   });
 
+  it("reports each stage before it starts, so the client can show progress", async () => {
+    const { provider } = fakeProvider([analysis, structure, spec]);
+    const stages: string[] = [];
+
+    await generatePost(input, defaultBrandKit, provider, (stage) => stages.push(stage));
+
+    expect(stages).toEqual(["analyze", "structure", "plan"]);
+  });
+
+  it("reports the stage it failed on and no further ones", async () => {
+    const { provider } = fakeProvider([analysis, "not json", "not json either"]);
+    const stages: string[] = [];
+
+    await expect(
+      generatePost(input, defaultBrandKit, provider, (stage) => stages.push(stage)),
+    ).rejects.toThrow();
+
+    expect(stages).toEqual(["analyze", "structure"]);
+  });
+
   it("lets an explicit post type override the model's guess", async () => {
     const { provider } = fakeProvider([analysis, structure, { ...spec, postType: "opinion" }]);
 
