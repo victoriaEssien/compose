@@ -127,7 +127,7 @@ overflows at 390px. Rounds 7 and 8 of `review-round1.md` finish it.
 - [x] Round 3: show the work (thumbnails, filmstrip, template grid, export completion)
 - [x] Round 4: the Brand Kit (real preview, starter palettes, contrast check)
 - [ ] Round 5: the generation wait (stage reporting, skeleton, cancel)
-- [ ] Round 6: states and error routes (`error.tsx`, `loading.tsx`, `not-found.tsx`)
+- [x] Round 6: states and error routes (`error.tsx`, `loading.tsx`, `not-found.tsx`)
 - [ ] Round 7: accessibility (contrast tokens, error association, targets, motion)
 - [ ] Round 8: responsive (390px editor overflow, mobile nav, `md:` step)
 - [ ] Round 9: performance (refresh storm, woff2 subsets, throttling)

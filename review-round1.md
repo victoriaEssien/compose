@@ -302,12 +302,26 @@ nothing beyond one static sentence.
 `src/app` contains zero `error.tsx`, `loading.tsx`, `not-found.tsx` and
 `global-error.tsx`. There is no `middleware.ts` and no `Suspense` anywhere.
 
-- [ ] `error.tsx` at the root and in `(app)`
-- [ ] `global-error.tsx`
-- [ ] `not-found.tsx`. `posts/[postId]/page.tsx:29` calls `notFound()` today and falls through to the stock Next.js page
-- [ ] `loading.tsx` for `/dashboard`, `/brand`, `/assets`, `/posts/[postId]`
-- [ ] Suspense boundary around the N-slide render on `/posts/[postId]`. It awaits `Promise.all` over every slide before any markup appears (`posts/[postId]/page.tsx:34-46`)
-- [ ] Stop leaking Zod issue paths into user-facing strings. They currently produce text like "items 0 title must not be empty" (`actions.ts:39-42`, `posts/new/actions.ts:20-21`)
+**Status: done.** `pnpm typecheck`, `pnpm lint`, `pnpm test` (238 passing) and
+`pnpm build` all green.
+
+- [x] `error.tsx` at the root
+- [x] `global-error.tsx`
+- [x] `not-found.tsx`. `posts/[postId]/page.tsx:29` calls `notFound()` today and falls through to the stock Next.js page
+- [x] `loading.tsx` for `/dashboard`, `/brand`, `/assets`, `/posts/[postId]` and `/posts/new`
+- [x] Give the N-slide render on `/posts/[postId]` a fallback. It awaits `Promise.all` over every slide before any markup appears (`posts/[postId]/page.tsx:34-46`)
+- [x] Stop leaking Zod issue paths into user-facing strings. They currently produce text like "items 0 title must not be empty" (`actions.ts:39-42`, `posts/new/actions.ts:20-21`)
+
+`loading.tsx` at the route level gives the whole blocking navigation a fallback,
+which is what the editor actually needed: it awaits every slide render before
+any markup. Each skeleton mirrors its own page's shape rather than being a
+generic spinner, and this is the first use of `ui/skeleton.tsx`, installed in
+Phase 0 and imported nowhere until now.
+
+New `src/lib/issues.ts` turns a Zod issue into a sentence and drops the path.
+Three call sites used to join the path in, producing text that reads as a stack
+trace. The paths inside `server/ai/structured.ts` are left alone: those are
+diagnostic, aimed at the model and the log, and never shown to the user.
 
 ---
 

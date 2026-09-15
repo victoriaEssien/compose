@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { firstIssueMessage } from "@/lib/issues";
 import { requireUserId } from "@/server/auth";
 import { saveBrandKit } from "@/server/brand";
 import { brandKitSchema } from "@/types/brand";
@@ -12,10 +13,7 @@ export async function saveBrandKitAction(input: unknown): Promise<SaveBrandKitRe
   const userId = await requireUserId();
   const parsed = brandKitSchema.safeParse(input);
 
-  if (!parsed.success) {
-    const issue = parsed.error.issues[0];
-    return { saved: false, error: `${issue.path.join(" ")}: ${issue.message}`.trim() };
-  }
+  if (!parsed.success) return { saved: false, error: firstIssueMessage(parsed.error) };
 
   await saveBrandKit(userId, parsed.data);
   revalidatePath("/brand");

@@ -6,6 +6,7 @@ import { generateCaption } from "@/server/ai/caption";
 import { generateIllustration } from "@/server/ai/illustration";
 import { regenerateSlide } from "@/server/ai/regenerate";
 import { AiError } from "@/server/ai/structured";
+import { firstIssueMessage } from "@/lib/issues";
 import { createAsset } from "@/server/assets";
 import { requireUserId } from "@/server/auth";
 import { loadBrandKit } from "@/server/brand";
@@ -41,11 +42,6 @@ function revalidate(postId: string) {
   revalidatePath("/dashboard");
 }
 
-function firstIssue(error: { issues: { path: PropertyKey[]; message: string }[] }) {
-  const issue = error.issues[0];
-  return `${issue.path.join(" ")} ${issue.message}`.trim();
-}
-
 export async function saveSlideAction(
   postId: string,
   slideId: string,
@@ -55,10 +51,10 @@ export async function saveSlideAction(
   const userId = await requireUserId();
 
   const parsedContent = slideSpecSchema.safeParse(content);
-  if (!parsedContent.success) return { ok: false, error: firstIssue(parsedContent.error) };
+  if (!parsedContent.success) return { ok: false, error: firstIssueMessage(parsedContent.error) };
 
   const parsedDesign = slideDesignConfigSchema.safeParse(designConfig ?? {});
-  if (!parsedDesign.success) return { ok: false, error: firstIssue(parsedDesign.error) };
+  if (!parsedDesign.success) return { ok: false, error: firstIssueMessage(parsedDesign.error) };
 
   const saved = await updateSlide(userId, postId, slideId, {
     content: parsedContent.data,
@@ -130,10 +126,10 @@ export async function restoreSlideAction(
   const userId = await requireUserId();
 
   const parsedContent = slideSpecSchema.safeParse(content);
-  if (!parsedContent.success) return { ok: false, error: firstIssue(parsedContent.error) };
+  if (!parsedContent.success) return { ok: false, error: firstIssueMessage(parsedContent.error) };
 
   const parsedDesign = slideDesignConfigSchema.safeParse(designConfig ?? {});
-  if (!parsedDesign.success) return { ok: false, error: firstIssue(parsedDesign.error) };
+  if (!parsedDesign.success) return { ok: false, error: firstIssueMessage(parsedDesign.error) };
 
   const restored = await insertSlideAt(userId, postId, Math.max(0, at), {
     content: parsedContent.data,

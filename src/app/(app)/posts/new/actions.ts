@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { firstIssueMessage } from "@/lib/issues";
 import { generatePost } from "@/server/ai/generate-post";
 import { AiError } from "@/server/ai/structured";
 import { requireUserId } from "@/server/auth";
@@ -16,10 +17,7 @@ export async function createPostAction(input: unknown): Promise<CreatePostResult
   const userId = await requireUserId();
 
   const parsed = generatePostInputSchema.safeParse(input);
-  if (!parsed.success) {
-    const issue = parsed.error.issues[0];
-    return { error: `${issue.path.join(" ")} ${issue.message}`.trim() };
-  }
+  if (!parsed.success) return { error: firstIssueMessage(parsed.error) };
 
   const brand = await loadBrandKit(userId);
 
