@@ -58,6 +58,16 @@ drizzle/                Generated migrations (don't hand-edit)
 - Respect the MVP boundary in spec section 23. Don't build publishing, scheduling, analytics or multi-platform features unless asked.
 - UI copy: plain and direct, no em dashes.
 
+## Before pushing
+
+Run `/ai-slop-cleaner` over the branch diff before every push, then re-run
+`pnpm typecheck && pnpm lint && pnpm test`.
+
+- Comments say why, not what. Two lines maximum. Go longer only when the
+  reasoning genuinely does not fit, which is rare.
+- No comment that restates the line below it, no try/catch that only rethrows,
+  no defensive branch for a case that cannot happen.
+
 ## Commits
 
 Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`). One logical change per commit.
