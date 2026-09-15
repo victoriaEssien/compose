@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { maxSlides, postSpecSchema, postTypeRequestSchema, postTypeSchema } from "./post";
+import {
+  generatePostInputSchema,
+  maxSlides,
+  postSpecSchema,
+  postTypeRequestSchema,
+  postTypeSchema,
+} from "./post";
 import { slideSpecSchema, slideTextLimits, templateKinds } from "./slide";
 import type { SlideSpec, SlideSpecOf, TemplateKind } from "./slide";
 
@@ -183,5 +189,41 @@ describe("postSpecSchema", () => {
     const slides = Array.from({ length: maxSlides + 1 }, () => textSlide);
 
     expect(postSpecSchema.safeParse(postSpec(slides)).success).toBe(false);
+  });
+});
+
+describe("generatePostInputSchema", () => {
+  const input = {
+    content: "I spent three hours debugging a missing index on post.user_id.",
+    context: null,
+    postType: "auto",
+    tone: null,
+  };
+
+  it("accepts a filled-in form", () => {
+    expect(generatePostInputSchema.safeParse(input).success).toBe(true);
+  });
+
+  it("rejects content too short to generate anything useful from", () => {
+    const result = generatePostInputSchema.safeParse({ ...input, content: "too short" });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["content"]);
+  });
+
+  it("rejects a post type that is not on the menu", () => {
+    expect(generatePostInputSchema.safeParse({ ...input, postType: "listicle" }).success).toBe(
+      false,
+    );
+  });
+
+  it("accepts an optional context and tone", () => {
+    const result = generatePostInputSchema.safeParse({
+      ...input,
+      context: "For backend developers",
+      tone: "technical",
+    });
+
+    expect(result.success).toBe(true);
   });
 });

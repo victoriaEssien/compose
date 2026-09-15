@@ -68,10 +68,10 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 
 ## Phase 5: Create Post flow
 
-- [ ] Create Post page (spec section 22): content textarea, optional context, post type select (Auto default), tone select
-- [ ] Server action: validate input, run `generatePost`, persist `post` + `slide` rows as a draft, redirect to `/posts/[postId]`
-- [ ] Loading / progress state during generation
-- [ ] Error handling: AI failure, validation failure, empty input
+- [x] Create Post page (spec section 22): content textarea, optional context, post type select (Auto default), tone select
+- [x] Server action: validate input, run `generatePost`, persist `post` + `slide` rows as a draft, redirect to `/posts/[postId]`
+- [x] Loading / progress state during generation
+- [x] Error handling: AI failure, validation failure, empty input
 
 ## Phase 6: Renderer, templates, preview, export
 

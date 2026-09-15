@@ -45,6 +45,9 @@ export const postSpecSchema = z
 
 export type PostSpec = z.infer<typeof postSpecSchema>;
 
+/** Offered on the Create Post screen. Null means "use the brand voice". */
+export const tonePresets = ["direct", "technical", "friendly", "playful", "serious"] as const;
+
 /** What the Create Post screen submits (spec section 22). */
 export const generatePostInputSchema = z.object({
   content: z.string().min(20).max(6000),
