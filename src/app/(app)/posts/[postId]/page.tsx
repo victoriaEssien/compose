@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { listAssets } from "@/server/assets";
+import { listSavedDesigns } from "@/server/designs";
 import { requireUserId } from "@/server/auth";
 import { loadRenderablePost, parseFormat } from "@/server/render/post";
 import { slideElement } from "@/server/render/slide";
@@ -22,9 +23,10 @@ export default async function Page({
 }) {
   const userId = await requireUserId();
   const { postId } = await params;
-  const [found, assets] = await Promise.all([
+  const [found, assets, looks] = await Promise.all([
     loadRenderablePost(userId, postId),
     listAssets(userId),
+    listSavedDesigns(userId),
   ]);
 
   if (!found) notFound();
@@ -106,6 +108,12 @@ export default async function Page({
           postId={post.id}
           format={format}
           assets={assets}
+          looks={looks.map((look) => ({
+            id: look.id,
+            name: look.name,
+            kind: look.kind,
+            configuration: look.configuration,
+          }))}
           brandColors={{
             background: brand.colors.background,
             text: brand.colors.text,

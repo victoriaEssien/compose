@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { generateCaption } from "@/server/ai/caption";
 import { generateIllustration } from "@/server/ai/illustration";
@@ -8,6 +9,7 @@ import { regenerateSlide } from "@/server/ai/regenerate";
 import { AiError } from "@/server/ai/structured";
 import { firstIssueMessage } from "@/lib/issues";
 import { createAsset } from "@/server/assets";
+import { countSavedDesigns, maxSavedDesigns, removeDesign, saveDesign } from "@/server/designs";
 import { requireUserId } from "@/server/auth";
 import { loadBrandKit } from "@/server/brand";
 import { loadPost, setPostStatus } from "@/server/posts";
@@ -249,6 +251,57 @@ export async function generateCaptionAction(
           : "Caption generation failed. Check your connection and try again.",
     };
   }
+}
+
+/** Saving the current slide's overrides as a named look (spec section 15). */
+export async function saveDesignAction(
+  name: unknown,
+  kind: unknown,
+  configuration: unknown,
+): Promise<SlideActionResult> {
+  const userId = await requireUserId();
+
+  const parsedName = z.string().trim().min(1).max(40).safeParse(name);
+  if (!parsedName.success) return { ok: false, error: "Give the look a name." };
+
+  const parsedKind = templateKindSchema.safeParse(kind);
+  if (!parsedKind.success) return { ok: false, error: "That is not a template." };
+
+  const parsedConfig = slideDesignConfigSchema.safeParse(configuration ?? {});
+  if (!parsedConfig.success) return { ok: false, error: firstIssueMessage(parsedConfig.error) };
+
+  if (Object.keys(parsedConfig.data).length === 0) {
+    return { ok: false, error: "This slide uses the Brand Kit as it is, so there is nothing to save." };
+  }
+
+  if ((await countSavedDesigns(userId)) >= maxSavedDesigns) {
+    return {
+      ok: false,
+      error: `You have ${maxSavedDesigns} saved looks, which is the limit. Delete one first.`,
+    };
+  }
+
+  await saveDesign({
+    userId,
+    name: parsedName.data,
+    kind: parsedKind.data,
+    configuration: parsedConfig.data,
+  });
+
+  revalidatePath("/posts", "layout");
+  return done;
+}
+
+export async function deleteDesignAction(id: unknown): Promise<SlideActionResult> {
+  const userId = await requireUserId();
+
+  const parsed = z.uuid().safeParse(id);
+  if (!parsed.success) return { ok: false, error: "That look is gone." };
+
+  await removeDesign(userId, parsed.data);
+  revalidatePath("/posts", "layout");
+
+  return done;
 }
 
 export async function setPostStatusAction(

@@ -42,6 +42,7 @@ import { regenerateActions } from "@/types/slide";
 import type { RegenerateAction, SlideDesignConfig, SlideSpec, TemplateKind } from "@/types/slide";
 import {
   changeTemplateAction,
+  deleteDesignAction,
   deleteSlideAction,
   duplicateSlideAction,
   generateIllustrationAction,
@@ -49,6 +50,7 @@ import {
   removeIllustrationAction,
   reorderSlideAction,
   restoreSlideAction,
+  saveDesignAction,
   moveSlideAction,
   saveSlideAction,
 } from "./actions";
@@ -57,6 +59,8 @@ import type { EditableSlide, SlideDraft } from "./editor-state";
 import { IconPicker } from "./icon-picker";
 import { SlideDesign } from "./slide-design";
 import { SlideFields } from "./slide-fields";
+import { SavedLooks } from "./saved-looks";
+import type { SavedLook } from "./saved-looks";
 import { SlideFilmstrip } from "./slide-filmstrip";
 import { TemplatePicker } from "./template-picker";
 
@@ -84,6 +88,8 @@ const runningLabels: Record<string, string> = {
   illustration: "Generating illustration...",
   unillustrate: "Removing illustration...",
   undo: "Undoing...",
+  look: "Saving the look...",
+  unlook: "Deleting the look...",
 };
 
 const autosaveDelay = 900;
@@ -97,6 +103,7 @@ export function PostEditor({
   slideWidth,
   slideHeight,
   assets,
+  looks,
   brandColors,
   format,
 }: {
@@ -109,6 +116,7 @@ export function PostEditor({
   slideWidth: number;
   slideHeight: number;
   assets: AssetRow[];
+  looks: SavedLook[];
   brandColors: { background: string; text: string; accent: string };
   format: string;
 }) {
@@ -637,8 +645,19 @@ export function PostEditor({
             This slide&apos;s design
             <span className="text-muted-foreground font-normal">colors and text size</span>
           </summary>
-          <div className="mt-4">
+          <div className="mt-4 grid gap-4">
             <SlideDesign design={design} fallback={brandColors} onChange={setDesign} />
+            <SavedLooks
+              looks={looks}
+              current={design}
+              currentKind={draft.template}
+              disabled={busy}
+              onApply={setDesign}
+              onSave={(name, kind, configuration) =>
+                run("look", () => saveDesignAction(name, kind, configuration))
+              }
+              onDelete={(id) => run("unlook", () => deleteDesignAction(id))}
+            />
           </div>
         </details>
 
