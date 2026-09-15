@@ -26,7 +26,7 @@ import {
   generateIllustrationAction,
   regenerateSlideAction,
   removeIllustrationAction,
-  reorderSlidesAction,
+  moveSlideAction,
   saveSlideAction,
 } from "./actions";
 import { draftFor, draftSignature, serverSignature, shouldAutosave } from "./editor-state";
@@ -133,15 +133,13 @@ export function PostEditor({
     });
   }
 
+  /** Reorders the post. The arrows beside the preview only change what you are looking at. */
   function move(direction: -1 | 1) {
     const target = index + direction;
     if (target < 0 || target >= slides.length) return;
 
-    const order = slides.map((row) => row.id);
-    [order[index], order[target]] = [order[target], order[index]];
-
     setActive(target);
-    run(() => reorderSlidesAction(postId, order));
+    run(() => moveSlideAction(postId, slide.id, direction));
   }
 
   const canTakeAsset = draft.template === "screenshot" || draft.template === "project";
@@ -175,30 +173,52 @@ export function PostEditor({
           ))}
         </div>
 
-        {previews.map((preview, at) => (
-          <div key={slides[at]?.id ?? at} hidden={at !== index}>
-            {preview}
-          </div>
-        ))}
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="View the previous slide"
+            disabled={index === 0}
+            onClick={() => setActive(index - 1)}
+          >
+            &larr;
+          </Button>
+
+          {previews.map((preview, at) => (
+            <div key={slides[at]?.id ?? at} hidden={at !== index}>
+              {preview}
+            </div>
+          ))}
+
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="View the next slide"
+            disabled={index === slides.length - 1}
+            onClick={() => setActive(index + 1)}
+          >
+            &rarr;
+          </Button>
+        </div>
 
         <div className="flex flex-wrap items-center justify-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            aria-label="Move this slide earlier"
-            disabled={index === 0}
+            aria-label="Reorder: move this slide earlier in the post"
+            disabled={busy || index === 0}
             onClick={() => move(-1)}
           >
-            &larr; Move
+            Move earlier
           </Button>
           <Button
             variant="outline"
             size="sm"
-            aria-label="Move this slide later"
-            disabled={index === slides.length - 1}
+            aria-label="Reorder: move this slide later in the post"
+            disabled={busy || index === slides.length - 1}
             onClick={() => move(1)}
           >
-            Move &rarr;
+            Move later
           </Button>
           <Button
             variant="outline"

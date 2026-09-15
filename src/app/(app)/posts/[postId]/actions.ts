@@ -12,7 +12,7 @@ import {
   deleteSlide,
   duplicateSlide,
   loadSlide,
-  reorderSlides,
+  moveSlide,
   setSlideIllustration,
   updateSlide,
 } from "@/server/slides";
@@ -114,13 +114,14 @@ export async function deleteSlideAction(
   return done;
 }
 
-export async function reorderSlidesAction(
+export async function moveSlideAction(
   postId: string,
-  orderedIds: string[],
+  slideId: string,
+  direction: -1 | 1,
 ): Promise<SlideActionResult> {
   const userId = await requireUserId();
 
-  if (!(await reorderSlides(userId, postId, orderedIds))) return missing;
+  if (!(await moveSlide(userId, postId, slideId, direction))) return missing;
 
   revalidate(postId);
   return done;

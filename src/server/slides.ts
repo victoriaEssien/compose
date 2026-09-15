@@ -93,15 +93,32 @@ export async function deleteSlide(userId: string, postId: string, slideId: strin
   return true;
 }
 
-export async function reorderSlides(userId: string, postId: string, orderedIds: string[]) {
+/**
+ * Relative, and resolved against the stored order rather than a list sent by the
+ * client. Two quick clicks cannot then race on a stale copy of the slides.
+ */
+export async function moveSlide(
+  userId: string,
+  postId: string,
+  slideId: string,
+  direction: -1 | 1,
+) {
   if (!(await ownsPost(userId, postId))) return false;
 
-  const rows = await db().select({ id: slide.id }).from(slide).where(eq(slide.postId, postId));
-  const known = new Set(rows.map((row) => row.id));
+  const rows = await db()
+    .select({ id: slide.id })
+    .from(slide)
+    .where(eq(slide.postId, postId))
+    .orderBy(asc(slide.order), asc(slide.id));
 
-  if (orderedIds.length !== known.size || !orderedIds.every((id) => known.has(id))) return false;
+  const from = rows.findIndex((row) => row.id === slideId);
+  const to = from + direction;
+  if (from < 0 || to < 0 || to >= rows.length) return false;
 
-  await writeOrder(postId, orderedIds);
+  const ordered = rows.map((row) => row.id);
+  [ordered[from], ordered[to]] = [ordered[to], ordered[from]];
+
+  await writeOrder(postId, ordered);
   return true;
 }
 
