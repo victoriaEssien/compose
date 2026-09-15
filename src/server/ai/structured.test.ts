@@ -43,7 +43,7 @@ describe("generateStructured", () => {
       z.object({ kind: z.literal("a"), a: z.string() }),
       z.object({ kind: z.literal("b"), b: z.string() }),
     ]);
-    const { provider, calls } = fakeProvider(['{"kind":"a","a":"x"}']);
+    const { provider, calls } = fakeProvider(['{"value":{"kind":"a","a":"x"}}']);
 
     await generateStructured(provider, {
       name: "test.v1",
@@ -56,6 +56,8 @@ describe("generateStructured", () => {
     expect(sent).toContain("anyOf");
     expect(sent).not.toContain("oneOf");
     expect(sent).not.toContain("$schema");
+    // OpenAI rejects a non-object root, so a bare union is wrapped and unwrapped again.
+    expect(calls[0]?.jsonSchema.type).toBe("object");
   });
 
   it("retries once when the model returns something that is not JSON", async () => {

@@ -89,15 +89,15 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 
 ## Phase 7: Editor and regeneration
 
-- [ ] Edit slide text inline or in a side panel (spec section 13)
-- [ ] Reorder, duplicate and delete slides
-- [ ] Change template for a slide (re-map content fields where possible)
-- [ ] Change visual (asset picker or suggested icon)
-- [ ] Adjust font size and colors per slide (overrides stored in `designConfig`)
-- [ ] Edit CTA
-- [ ] Regenerate single slide with options (spec section 14): rewrite, shorter, clearer, funnier, more technical, change layout, another design, free-text instruction
-- [ ] Regeneration changes only the target slide and keeps the rest of the post intact
-- [ ] Autosave edits to the draft
+- [x] Edit slide text inline or in a side panel (spec section 13)
+- [x] Reorder, duplicate and delete slides
+- [x] Change template for a slide (re-map content fields where possible)
+- [x] Change visual (asset picker or suggested icon)
+- [x] Adjust font size and colors per slide (overrides stored in `designConfig`)
+- [x] Edit CTA
+- [x] Regenerate single slide with options (spec section 14): rewrite, shorter, clearer, funnier, more technical, change layout, another design, free-text instruction
+- [x] Regeneration changes only the target slide and keeps the rest of the post intact
+- [x] Autosave edits to the draft
 
 ## Phase 8: Drafts, polish, deploy
 

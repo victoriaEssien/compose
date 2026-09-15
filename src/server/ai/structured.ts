@@ -55,7 +55,19 @@ export async function generateStructured<T>(
   provider: AiProvider,
   request: { name: string; system: string; user: string; schema: z.ZodType<T> },
 ): Promise<T> {
-  const jsonSchema = toModelJsonSchema(request.schema);
+  const schema = toModelJsonSchema(request.schema);
+
+  // OpenAI insists on an object at the root, which a bare union is not.
+  const wrapped = schema.type !== "object";
+  const jsonSchema = wrapped
+    ? {
+        type: "object",
+        properties: { value: schema },
+        required: ["value"],
+        additionalProperties: false,
+      }
+    : schema;
+
   let problem = "";
 
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -76,7 +88,8 @@ export async function generateStructured<T>(
       continue;
     }
 
-    const validated = request.schema.safeParse(parsed.value);
+    const payload = wrapped ? (parsed.value as { value?: unknown })?.value : parsed.value;
+    const validated = request.schema.safeParse(payload);
     if (validated.success) return validated.data;
 
     problem = describe(validated.error);

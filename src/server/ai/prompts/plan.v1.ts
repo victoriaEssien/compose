@@ -1,22 +1,9 @@
 import "server-only";
 import type { BrandKit } from "@/types/brand";
 import type { GeneratePostInput } from "@/types/post";
-import { maxListItems, slideTextLimits as limit } from "@/types/slide";
 import type { ContentAnalysis, ContentStructure } from "../schemas";
 import { brandBrief } from "./brand";
-
-// Built from slideTextLimits so the prompt cannot drift from what the schema enforces.
-const templates = [
-  `- cover: headline (max ${limit.headline}), subheadline (max ${limit.subheadline}, or null). The opening slide.`,
-  `- text: heading (max ${limit.heading}) and body (max ${limit.body}).`,
-  `- numbered_list: optional heading, plus 2 to ${maxListItems} items of title (max ${limit.itemTitle}) and body (max ${limit.itemBody}, or null).`,
-  `- code: optional heading, language, code (max ${limit.code}) and explanation (max ${limit.explanation}, or null).`,
-  `- comparison: optional heading, plus left and right, each a label (max ${limit.comparisonLabel}) and body (max ${limit.comparisonBody}).`,
-  `- quote: quote (max ${limit.quote}) and attribution (max ${limit.attribution}, or null).`,
-  `- screenshot: optional heading, assetId, caption (max ${limit.caption}, or null).`,
-  `- project: name (max ${limit.projectName}), description (max ${limit.projectDescription}), assetId, url (or null).`,
-  `- final: heading (max ${limit.heading}), body (max ${limit.finalBody}, or null) and cta (max ${limit.cta}). The closing slide.`,
-].join("\n");
+import { templateGuide } from "./template-guide";
 
 const system = [
   "You are the Design Planner for Compose. Turn the analysis and structure into a slide-by-slide specification the renderer will draw.",
@@ -24,7 +11,7 @@ const system = [
   "You decide what each slide says and which template holds it. You never decide pixels, fonts or colors: the renderer owns those.",
   "",
   "Templates, and you may use no others:",
-  templates,
+  templateGuide,
   "",
   "Rules:",
   "- Slide 1 uses cover. When there is more than one slide, the last uses final.",

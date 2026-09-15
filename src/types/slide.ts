@@ -175,3 +175,18 @@ export const slideDesignConfigSchema = z
   .partial();
 
 export type SlideDesignConfig = z.infer<typeof slideDesignConfigSchema>;
+
+/** Regenerate options offered per slide (spec section 14). */
+export const regenerateActions = [
+  "rewrite",
+  "shorter",
+  "clearer",
+  "funnier",
+  "more_technical",
+  "change_layout",
+  "another_design",
+] as const;
+
+export const regenerateActionSchema = z.enum(regenerateActions);
+
+export type RegenerateAction = z.infer<typeof regenerateActionSchema>;

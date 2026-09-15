@@ -3,13 +3,13 @@ import { notFound } from "next/navigation";
 
 import { SlidePreview } from "@/components/slide-preview";
 import { Button } from "@/components/ui/button";
+import { listAssets } from "@/server/assets";
 import { requireUserId } from "@/server/auth";
 import { loadRenderablePost, parseFormat } from "@/server/render/post";
-import { templates } from "@/templates";
-import { SlideCarousel } from "./slide-carousel";
+import { PostEditor } from "./post-editor";
 
 const statusLabels = { draft: "Draft", ready: "Ready", exported: "Exported" } as const;
-const previewWidth = 380;
+const previewWidth = 360;
 
 export default async function Page({
   params,
@@ -20,7 +20,10 @@ export default async function Page({
 }) {
   const userId = await requireUserId();
   const { postId } = await params;
-  const found = await loadRenderablePost(userId, postId);
+  const [found, assets] = await Promise.all([
+    loadRenderablePost(userId, postId),
+    listAssets(userId),
+  ]);
 
   if (!found) notFound();
 
@@ -42,7 +45,7 @@ export default async function Page({
   );
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-6 py-10">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-muted-foreground text-xs">
@@ -51,7 +54,7 @@ export default async function Page({
           <h1 className="mt-2 text-2xl font-semibold">{post.title}</h1>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {(["carousel", "square"] as const).map((option) => (
             <Button
               key={option}
@@ -64,30 +67,33 @@ export default async function Page({
               </Link>
             </Button>
           ))}
+          <Button asChild size="sm">
+            <a href={`/api/posts/${post.id}/export?format=${format}`} download>
+              Download all
+            </a>
+          </Button>
         </div>
       </div>
 
       <div className="mt-10">
-        <SlideCarousel
+        <PostEditor
+          postId={post.id}
+          format={format}
+          assets={assets}
+          brandColors={{
+            background: brand.colors.background,
+            text: brand.colors.text,
+            accent: brand.colors.accent,
+          }}
+          slides={slides.map((row) => ({
+            id: row.id,
+            template: row.template,
+            content: row.content,
+            designConfig: row.designConfig,
+          }))}
           previews={previews}
-          labels={slides.map((slide) => templates[slide.template].name)}
-          downloadUrls={slides.map(
-            (slide) => `/api/posts/${post.id}/slides/${slide.id}/png?format=${format}`,
-          )}
         />
       </div>
-
-      <div className="mt-10 flex justify-center">
-        <Button asChild>
-          <a href={`/api/posts/${post.id}/export?format=${format}`} download>
-            Download all {slides.length} slides
-          </a>
-        </Button>
-      </div>
-
-      <p className="text-muted-foreground mt-10 text-center text-sm">
-        Editing and regeneration arrive next.
-      </p>
     </main>
   );
 }
