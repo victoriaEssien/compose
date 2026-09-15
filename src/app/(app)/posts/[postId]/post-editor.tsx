@@ -423,7 +423,7 @@ export function PostEditor({
                     slideWidth={slideWidth}
                     slideHeight={slideHeight}
                     maxWidth={440}
-                    className={cn("mx-auto", at !== index && "hidden")}
+                    className={cn("shadow-lift mx-auto", at !== index && "hidden")}
                   >
                     {preview}
                   </SlideStage>
@@ -516,9 +516,9 @@ export function PostEditor({
         </div>
       </div>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-5">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-lg font-semibold">
+          <h2 className="font-display text-lg font-semibold" data-numeric>
             Slide {index + 1}
             <span className="text-muted-foreground ml-2 text-sm font-normal">
               {templateNames[draft.template]}
@@ -545,105 +545,109 @@ export function PostEditor({
           </div>
         )}
 
-        <div className="grid gap-1.5">
-          <Label htmlFor="template">Layout</Label>
-          <TemplatePicker
-            value={draft.template}
-            format={format}
-            disabled={busy}
-            onSelect={changeTemplate}
-          />
-        </div>
-
-        <SlideFields slide={draft} onChange={setDraft} />
-
-        <div className="grid gap-2">
-          <Label htmlFor="visual">Visual</Label>
-          <div className="flex flex-wrap items-center gap-2">
-            <IconPicker
-              value={matchedIcon}
+        <div className="bg-card shadow-card grid gap-5 rounded-xl border p-5">
+          <div className="grid gap-1.5">
+            <Label htmlFor="template">Layout</Label>
+            <TemplatePicker
+              value={draft.template}
+              format={format}
               disabled={busy}
-              onSelect={(name) => setDraft({ ...draft, visual: name })}
-            />
-            <Input
-              id="visual"
-              className="min-w-40 flex-1"
-              value={draft.visual ?? ""}
-              placeholder="Or describe one: a hand-drawn query plan"
-              onChange={(event) => setDraft({ ...draft, visual: event.target.value || null })}
+              onSelect={changeTemplate}
             />
           </div>
-          <p className="text-muted-foreground text-xs">{visualHelp}</p>
 
-          {(!matchedIcon || slide.imageUrl) && (
-            <div className="mt-1 grid gap-2 rounded-lg border border-dashed p-3">
-              <p className="text-muted-foreground text-xs">
-                An illustration is drawn by an image model. It costs money and takes a few seconds,
-                so Compose never does it on its own.
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={busy || !draft.visual}
-                  onClick={() =>
-                    run("illustration", () => generateIllustrationAction(postId, slide.id))
-                  }
-                >
-                  {running === "illustration"
-                    ? "Generating..."
-                    : slide.imageUrl
-                      ? "Generate another"
-                      : "Generate an illustration"}
-                </Button>
-                {slide.imageUrl && (
+          <SlideFields slide={draft} onChange={setDraft} />
+
+          <div className="grid gap-2">
+            <Label htmlFor="visual">Visual</Label>
+            <div className="flex flex-wrap items-center gap-2">
+              <IconPicker
+                value={matchedIcon}
+                disabled={busy}
+                onSelect={(name) => setDraft({ ...draft, visual: name })}
+              />
+              <Input
+                id="visual"
+                className="min-w-40 flex-1"
+                value={draft.visual ?? ""}
+                placeholder="Or describe one: a hand-drawn query plan"
+                onChange={(event) => setDraft({ ...draft, visual: event.target.value || null })}
+              />
+            </div>
+            <p className="text-muted-foreground text-xs">{visualHelp}</p>
+
+            {(!matchedIcon || slide.imageUrl) && (
+              <div className="mt-1 grid gap-2 rounded-lg border border-dashed p-3">
+                <p className="text-muted-foreground text-xs">
+                  An illustration is drawn by an image model. It costs money and takes a few
+                  seconds, so Compose never does it on its own.
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    disabled={busy}
+                    disabled={busy || !draft.visual}
                     onClick={() =>
-                      run("unillustrate", () => removeIllustrationAction(postId, slide.id))
+                      run("illustration", () => generateIllustrationAction(postId, slide.id))
                     }
                   >
-                    Delete illustration
+                    {running === "illustration"
+                      ? "Generating..."
+                      : slide.imageUrl
+                        ? "Generate another"
+                        : "Generate an illustration"}
                   </Button>
-                )}
+                  {slide.imageUrl && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() =>
+                        run("unillustrate", () => removeIllustrationAction(postId, slide.id))
+                      }
+                    >
+                      Delete illustration
+                    </Button>
+                  )}
+                </div>
               </div>
+            )}
+          </div>
+
+          {canTakeAsset && (
+            <div className="flex items-center gap-2">
+              <AssetPicker
+                assets={assets}
+                onSelect={(asset) => setDraft({ ...draft, assetId: asset.id })}
+                trigger={
+                  <Button type="button" variant="outline" size="sm">
+                    {draft.assetId ? "Change image" : "Choose image"}
+                  </Button>
+                }
+              />
+              {draft.assetId && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setDraft({ ...draft, assetId: null })}
+                >
+                  Detach image
+                </Button>
+              )}
             </div>
           )}
         </div>
 
-        {canTakeAsset && (
-          <div className="flex items-center gap-2">
-            <AssetPicker
-              assets={assets}
-              onSelect={(asset) => setDraft({ ...draft, assetId: asset.id })}
-              trigger={
-                <Button type="button" variant="outline" size="sm">
-                  {draft.assetId ? "Change image" : "Choose image"}
-                </Button>
-              }
-            />
-            {draft.assetId && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setDraft({ ...draft, assetId: null })}
-              >
-                Detach image
-              </Button>
-            )}
-          </div>
-        )}
-
-        <details className="group rounded-lg border p-4 [&_summary::-webkit-details-marker]:hidden">
-          <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium">
+        <details className="group bg-card shadow-card rounded-xl border p-5 [&_summary::-webkit-details-marker]:hidden">
+          <summary className="font-display flex cursor-pointer list-none items-center gap-2 text-sm font-semibold">
             <ChevronRight className="size-4 transition-transform group-open:rotate-90" />
             This slide&apos;s design
-            <span className="text-muted-foreground font-normal">colors and text size</span>
+            <span className="text-muted-foreground font-sans font-normal">
+              colours and text size
+            </span>
           </summary>
           <div className="mt-4 grid gap-4">
             <SlideDesign design={design} fallback={brandColors} onChange={setDesign} />
@@ -661,8 +665,8 @@ export function PostEditor({
           </div>
         </details>
 
-        <div className="grid gap-3 rounded-lg border p-4">
-          <h3 className="text-sm font-medium">Regenerate this slide</h3>
+        <div className="bg-card shadow-card grid gap-3 rounded-xl border p-5">
+          <h3 className="font-display text-sm font-semibold">Regenerate this slide</h3>
 
           <Label htmlFor="regenerateWith" className="sr-only">
             What to change

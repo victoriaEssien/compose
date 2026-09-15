@@ -31,13 +31,11 @@ function SheetContent({
 }: React.ComponentProps<typeof SheetPrimitive.Content> & { side?: "left" | "right" }) {
   return (
     <SheetPrimitive.Portal>
-      <SheetPrimitive.Overlay
-        className="data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]"
-      />
+      <SheetPrimitive.Overlay className="data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]" />
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          "bg-sidebar data-[state=closed]:animate-out data-[state=open]:animate-in fixed inset-y-0 z-50 flex w-[17.5rem] max-w-[calc(100%-3rem)] flex-col gap-0 shadow-pop duration-200 outline-none",
+          "bg-sidebar data-[state=closed]:animate-out data-[state=open]:animate-in shadow-pop fixed inset-y-0 z-50 flex w-[17.5rem] max-w-[calc(100%-3rem)] flex-col gap-0 duration-200 outline-none",
           side === "left"
             ? "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left left-0 border-r"
             : "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right right-0 border-l",

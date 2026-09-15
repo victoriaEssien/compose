@@ -68,7 +68,7 @@ export function AssetList({ assets }: { assets: AssetRow[] }) {
     <>
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {assets.map((row) => (
-          <li key={row.id} className="overflow-hidden rounded-lg border">
+          <li key={row.id} className="bg-card shadow-card overflow-hidden rounded-xl border">
             <div className="bg-muted relative aspect-[4/3]">
               <Image
                 src={row.url}

@@ -66,7 +66,11 @@ function BrandChip({ brand, onNavigate }: { brand: BrandSummary; onNavigate?: ()
   );
 }
 
-function SidebarBody({ user, brand, onNavigate }: {
+function SidebarBody({
+  user,
+  brand,
+  onNavigate,
+}: {
   user: SessionUser;
   brand: BrandSummary;
   onNavigate?: () => void;
@@ -152,7 +156,10 @@ export function AppShell({
             </SheetContent>
           </Sheet>
 
-          <Link href="/dashboard" className="focus-visible:ring-ring rounded-md focus-visible:ring-2 focus-visible:outline-none">
+          <Link
+            href="/dashboard"
+            className="focus-visible:ring-ring rounded-md focus-visible:ring-2 focus-visible:outline-none"
+          >
             <Logo />
             <span className="sr-only">Compose home</span>
           </Link>

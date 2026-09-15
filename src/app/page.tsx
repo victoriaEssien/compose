@@ -263,9 +263,9 @@ export default async function Home() {
                 Every post should look like it came from the same account.
               </h2>
               <p className="text-muted-foreground mt-4 text-pretty">
-                Your Brand Kit holds the fonts, colours, corner radius and voice. Compose reads it on
-                every generation, so a carousel you make tonight sits beside one you made last month
-                without anyone noticing the gap.
+                Your Brand Kit holds the fonts, colours, corner radius and voice. Compose reads it
+                on every generation, so a carousel you make tonight sits beside one you made last
+                month without anyone noticing the gap.
               </p>
             </div>
 

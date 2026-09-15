@@ -102,7 +102,9 @@ export default async function Page() {
                 ? "Posts show up here once you mark them ready or download them."
                 : "Paste a rough idea, a project update or something you learned, and Compose will turn it into a carousel. There is an example on the New post screen if you want to watch it work first."
             }
-            action={drafts.length ? undefined : { href: "/posts/new", label: "Create your first post" }}
+            action={
+              drafts.length ? undefined : { href: "/posts/new", label: "Create your first post" }
+            }
             primary={!firstRun && drafts.length === 0}
             visual={drafts.length === 0}
           />

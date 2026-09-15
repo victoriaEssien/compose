@@ -48,7 +48,10 @@ export function Appearance() {
                 className="sr-only"
               />
               <Icon
-                className={cn("size-4 shrink-0", selected ? "text-primary" : "text-muted-foreground")}
+                className={cn(
+                  "size-4 shrink-0",
+                  selected ? "text-primary" : "text-muted-foreground",
+                )}
                 aria-hidden="true"
               />
               {label}

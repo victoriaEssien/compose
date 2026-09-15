@@ -38,7 +38,15 @@ export function LogoMark({ className }: { className?: string }) {
       />
       {/* A headline and a line under it: the slide has something on it. */}
       <rect x="14.6" y="9.1" width="6.8" height="1.9" rx="0.95" fill="currentColor" />
-      <rect x="14.6" y="12.6" width="4.2" height="1.9" rx="0.95" fill="currentColor" opacity="0.5" />
+      <rect
+        x="14.6"
+        y="12.6"
+        width="4.2"
+        height="1.9"
+        rx="0.95"
+        fill="currentColor"
+        opacity="0.5"
+      />
     </svg>
   );
 }

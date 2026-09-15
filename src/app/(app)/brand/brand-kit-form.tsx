@@ -51,10 +51,12 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="grid gap-4">
+    <section className="bg-card shadow-card grid gap-4 rounded-xl border p-5">
       <div>
-        <h2 className="text-sm font-medium">{title}</h2>
-        {hint && <p className="text-muted-foreground mt-1 text-xs text-pretty">{hint}</p>}
+        <h2 className="font-display text-base font-semibold">{title}</h2>
+        {hint && (
+          <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed text-pretty">{hint}</p>
+        )}
       </div>
       {children}
     </section>
@@ -105,7 +107,7 @@ export function BrandKitForm({
 
   return (
     <form onSubmit={onSubmit} className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_auto]">
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-5">
         <Section
           title="Identity"
           hint="Your handle is drawn in the footer of every slide, so it ends up in every exported PNG."
@@ -369,7 +371,9 @@ export function BrandKitForm({
       </div>
 
       <div className="lg:sticky lg:top-10 lg:self-start">
-        <p className="text-muted-foreground mb-3 text-sm">Preview</p>
+        <p className="text-muted-foreground mb-3 text-[0.6875rem] font-medium tracking-[0.08em] uppercase">
+          Preview
+        </p>
         <BrandPreview kit={kit} />
       </div>
     </form>

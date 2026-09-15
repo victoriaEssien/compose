@@ -55,7 +55,7 @@ export function SavedLooks({
   return (
     <div className="grid gap-3 border-t pt-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="text-sm font-medium">Saved looks</h4>
+        <h4 className="font-display text-sm font-semibold">Saved looks</h4>
         {!naming && (
           <Button
             type="button"

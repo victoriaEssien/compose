@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 
+import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 
 export default function Error({ error, reset }: { error: Error; reset: () => void }) {
@@ -11,8 +12,9 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
   }, [error]);
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 px-6 text-center">
-      <h1 className="text-2xl font-semibold">That page did not load</h1>
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
+      <Logo className="mb-2" />
+      <h1 className="font-display text-2xl font-semibold text-balance">That page did not load</h1>
       <p className="text-muted-foreground text-sm text-pretty">
         Something broke on our side, not in what you wrote. Nothing you had saved is affected.
       </p>

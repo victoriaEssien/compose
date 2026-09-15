@@ -84,7 +84,6 @@
   font-display: swap;
 }
 
-
 /*
  * Compose runs on paper, not on white.
  *
@@ -101,7 +100,6 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
-  --font-display: var(--font-space-grotesk);
   --font-mono: var(--font-geist-mono);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -137,6 +135,11 @@
 
 :root {
   --radius: 0.75rem;
+
+  /* Outside @theme on purpose: a --font-* theme key would generate its own
+     .font-display and collide with the @utility below, leaving neither in
+     the output. The utility owns the name; this just holds the family. */
+  --font-display: var(--font-space-grotesk);
 
   /* Paper and ink. 16.7:1. */
   --background: #faf9f6;

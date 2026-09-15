@@ -24,7 +24,8 @@ export function AppNav({ onNavigate }: { onNavigate?: () => void }) {
     <nav className="grid gap-0.5">
       {links.map(({ href, label, Icon }) => {
         // The editor lives under /posts/:id but belongs to the Posts list.
-        const active = isActive(pathname, href) || (href === "/dashboard" && pathname.startsWith("/posts/"));
+        const active =
+          isActive(pathname, href) || (href === "/dashboard" && pathname.startsWith("/posts/"));
 
         return (
           <Link
