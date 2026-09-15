@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -15,7 +16,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { SlideStage } from "@/components/slide-stage";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -38,6 +47,7 @@ import {
   generateIllustrationAction,
   regenerateSlideAction,
   removeIllustrationAction,
+  reorderSlideAction,
   restoreSlideAction,
   moveSlideAction,
   saveSlideAction,
@@ -46,6 +56,7 @@ import { draftFor, draftSignature, serverSignature, shouldAutosave } from "./edi
 import type { EditableSlide, SlideDraft } from "./editor-state";
 import { SlideDesign } from "./slide-design";
 import { SlideFields } from "./slide-fields";
+import { SlideFilmstrip } from "./slide-filmstrip";
 
 export type { EditableSlide };
 
@@ -78,13 +89,20 @@ export function PostEditor({
   postId,
   slides,
   previews,
+  thumbs,
+  slideWidth,
+  slideHeight,
   assets,
   brandColors,
   format,
 }: {
   postId: string;
   slides: EditableSlide[];
+  /** The rendered slides. Same elements as `thumbs`, drawn at a different scale. */
   previews: React.ReactNode[];
+  thumbs: React.ReactNode[];
+  slideWidth: number;
+  slideHeight: number;
   assets: AssetRow[];
   brandColors: { background: string; text: string; accent: string };
   format: string;
@@ -249,6 +267,18 @@ export function PostEditor({
     );
   }
 
+  /** Dropping a thumbnail elsewhere in the filmstrip. */
+  function reorder(from: number, to: number) {
+    const moved = slides[from];
+    if (!moved) return;
+
+    run(
+      "move",
+      () => reorderSlideAction(postId, moved.id, to),
+      () => setActive(to),
+    );
+  }
+
   function changeTemplate(value: TemplateKind) {
     const previous = editingRef.current;
 
@@ -313,53 +343,77 @@ export function PostEditor({
       : "No icon matches this hint. Generate an illustration, or try another word.";
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[420px_1fr]">
-      <div className="flex flex-col items-center gap-5">
-        <div className="flex flex-wrap items-center justify-center gap-1.5">
-          {slides.map((row, at) => (
-            <button
-              key={row.id}
-              type="button"
-              onClick={() => selectSlide(at)}
-              aria-label={`Slide ${at + 1}`}
-              aria-current={at === index ? "true" : undefined}
-              className={cn(
-                "focus-visible:ring-ring rounded-md px-2.5 py-1 text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none",
-                at === index
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {at + 1}
-            </button>
-          ))}
-        </div>
+    <div className="grid gap-10 lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)]">
+      <div className="flex flex-col items-center gap-5 lg:sticky lg:top-6 lg:self-start">
+        <SlideFilmstrip
+          slides={slides}
+          thumbs={thumbs}
+          index={index}
+          slideWidth={slideWidth}
+          slideHeight={slideHeight}
+          disabled={busy}
+          onSelect={selectSlide}
+          onReorder={reorder}
+        />
 
-        <div className="flex items-center gap-3">
+        <div className="flex w-full items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
+            className="shrink-0"
             aria-label="View the previous slide"
             disabled={index === 0}
             onClick={() => selectSlide(index - 1)}
           >
-            &larr;
+            <ChevronLeft className="size-4" />
           </Button>
 
-          {previews.map((preview, at) => (
-            <div key={slides[at]?.id ?? at} hidden={at !== index}>
-              {preview}
-            </div>
-          ))}
+          <Dialog>
+            <DialogTrigger asChild>
+              <button
+                type="button"
+                aria-label={`Open slide ${index + 1} at full size`}
+                className="focus-visible:ring-ring min-w-0 flex-1 cursor-zoom-in rounded-xl focus-visible:ring-2 focus-visible:outline-none"
+              >
+                {previews.map((preview, at) => (
+                  <SlideStage
+                    key={slides[at]?.id ?? at}
+                    slideWidth={slideWidth}
+                    slideHeight={slideHeight}
+                    maxWidth={440}
+                    className={cn("mx-auto", at !== index && "hidden")}
+                  >
+                    {preview}
+                  </SlideStage>
+                ))}
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[min(92vw,640px)]">
+              <DialogHeader>
+                <DialogTitle>
+                  Slide {index + 1} of {slides.length}
+                </DialogTitle>
+              </DialogHeader>
+              <SlideStage
+                slideWidth={slideWidth}
+                slideHeight={slideHeight}
+                maxWidth={592}
+                className="mx-auto"
+              >
+                {previews[index]}
+              </SlideStage>
+            </DialogContent>
+          </Dialog>
 
           <Button
             variant="ghost"
             size="icon"
+            className="shrink-0"
             aria-label="View the next slide"
             disabled={index === slides.length - 1}
             onClick={() => selectSlide(index + 1)}
           >
-            &rarr;
+            <ChevronRight className="size-4" />
           </Button>
         </div>
 

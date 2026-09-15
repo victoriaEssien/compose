@@ -155,6 +155,31 @@ export async function moveSlide(
   return true;
 }
 
+/**
+ * Absolute position, for dragging a thumbnail along the filmstrip. Resolved
+ * against stored order like moveSlide, so a drop cannot act on a stale list.
+ */
+export async function moveSlideTo(userId: string, postId: string, slideId: string, to: number) {
+  if (!(await ownsPost(userId, postId))) return false;
+
+  const rows = await db()
+    .select({ id: slide.id })
+    .from(slide)
+    .where(eq(slide.postId, postId))
+    .orderBy(asc(slide.order), asc(slide.id));
+
+  const from = rows.findIndex((row) => row.id === slideId);
+  if (from < 0 || to < 0 || to >= rows.length) return false;
+  if (from === to) return true;
+
+  const ordered = rows.map((row) => row.id);
+  const [moved] = ordered.splice(from, 1);
+  ordered.splice(to, 0, moved);
+
+  await writeOrder(postId, ordered);
+  return true;
+}
+
 async function compactOrder(postId: string) {
   const rows = await db()
     .select({ id: slide.id })

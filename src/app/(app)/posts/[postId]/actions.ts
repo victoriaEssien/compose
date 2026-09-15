@@ -14,6 +14,7 @@ import {
   insertSlideAt,
   loadSlide,
   moveSlide,
+  moveSlideTo,
   setSlideIllustration,
   updateSlide,
 } from "@/server/slides";
@@ -150,6 +151,21 @@ export async function moveSlideAction(
   const userId = await requireUserId();
 
   if (!(await moveSlide(userId, postId, slideId, direction))) return missing;
+
+  revalidate(postId);
+  return done;
+}
+
+/** Dropping a thumbnail somewhere else in the filmstrip. */
+export async function reorderSlideAction(
+  postId: string,
+  slideId: string,
+  to: number,
+): Promise<SlideActionResult> {
+  const userId = await requireUserId();
+
+  if (!Number.isInteger(to) || to < 0) return { ok: false, error: "That is not a position." };
+  if (!(await moveSlideTo(userId, postId, slideId, to))) return missing;
 
   revalidate(postId);
   return done;

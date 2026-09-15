@@ -150,15 +150,31 @@ specificity verdict.
 
 ### 3.2 The editor hides the carousel
 
-- [ ] Replace the number strip with a filmstrip of the previews that are already rendered and sitting in the DOM behind `hidden` (`post-editor.tsx:157-175`, previews at `:188-192`). A 64px strip costs nothing extra
-- [ ] Show template, and over-limit state, on each filmstrip item. Nothing currently distinguishes slide 3 from slide 5 except the numeral
-- [ ] **[BLOCKED]** Drag to reorder in the filmstrip. See [D1](#d1-drag-to-reorder-vs-the-no-drag-and-drop-ban)
+- [x] Replace the number strip with a filmstrip of the previews that are already rendered and sitting in the DOM behind `hidden` (`post-editor.tsx:157-175`, previews at `:188-192`). A 64px strip costs nothing extra
+- [x] Show template on each filmstrip item, through its accessible name and title. Nothing previously distinguished slide 3 from slide 5 except the numeral
+- [ ] Show over-limit state on a filmstrip item. Needs the per-template limits in the browser, which `slide-fields` has and the strip does not yet
+- [x] Drag to reorder in the filmstrip. **D1 was answered "build it"**
+
+`page.tsx` now calls `slideElement` **once** per slide and hands the same
+element to both the filmstrip and the stage, so showing the carousel as a
+sequence costs no extra renders. Dragging uses native HTML5 drag events, no new
+dependency, and Move earlier / Move later stay exactly as they were so keyboard
+and screen reader users lose nothing. New `moveSlideTo` resolves the drop
+against stored order, like `moveSlide` already did, so a stale list cannot
+reorder the wrong slide.
 
 ### 3.3 The preview is too small to judge
 
-- [ ] Make the preview responsive, `min(520px, available)`, instead of hard-coded 320px (`posts/[postId]/page.tsx:13`). At 320px a 1080px slide scales to 0.296, so body copy set at 32 renders at **9.5 CSS pixels** and captions at 7.7px
-- [ ] Add click-to-enlarge at full size. `dialog` is already installed
-- [ ] Make the editor preview sticky. `brand-kit-form.tsx:290` already does this; the editor, where live feedback matters more, does not (`post-editor.tsx:156`)
+- [x] Make the preview responsive, `min(520px, available)`, instead of hard-coded 320px (`posts/[postId]/page.tsx:13`). At 320px a 1080px slide scales to 0.296, so body copy set at 32 renders at **9.5 CSS pixels** and captions at 7.7px
+- [x] Add click-to-enlarge at full size. `dialog` is already installed
+- [x] Make the editor preview sticky. `brand-kit-form.tsx:290` already does this; the editor, where live feedback matters more, does not (`post-editor.tsx:156`)
+
+New `SlideStage` (`src/components/slide-stage.tsx`) measures its own width with
+a `ResizeObserver` and scales to fit, so the preview grows with the column
+instead of sitting at a constant 320px. It takes the slide size as plain
+numbers rather than importing `@/templates`, which would drag the font metrics
+table into the browser bundle. The stage is a zoom trigger: clicking opens the
+slide at up to 592px, where body copy renders around 17px instead of 9.5px.
 
 ### 3.4 Nine layouts chosen by name
 

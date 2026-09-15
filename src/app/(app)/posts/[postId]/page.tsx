@@ -1,16 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { SlidePreview } from "@/components/slide-preview";
 import { Button } from "@/components/ui/button";
 import { listAssets } from "@/server/assets";
 import { requireUserId } from "@/server/auth";
 import { loadRenderablePost, parseFormat } from "@/server/render/post";
+import { slideElement } from "@/server/render/slide";
+import { formatSizes } from "@/templates";
 import { PostEditor } from "./post-editor";
 import { PostStatusSelect } from "./post-status";
-
-// 320 plus the page gutters still fits a 400px screen without sideways scroll.
-const previewWidth = 320;
 
 export default async function Page({
   params,
@@ -31,19 +29,14 @@ export default async function Page({
   const format = parseFormat((await searchParams).format ?? null);
   const { post, slides, inputs, brand, assetUrls } = found;
 
-  const previews = await Promise.all(
-    inputs.map((input) => (
-      <SlidePreview
-        key={input.index}
-        input={input}
-        brand={brand}
-        format={format}
-        total={inputs.length}
-        assetUrls={assetUrls}
-        width={previewWidth}
-      />
-    )),
+  // Rendered once per slide, then drawn twice at different scales: once in the
+  // filmstrip and once on the stage. Elements are reusable, so the expensive
+  // part (Shiki, asset lookup) does not run a second time.
+  const elements = await Promise.all(
+    inputs.map((input) => slideElement(input, brand, format, inputs.length, assetUrls)),
   );
+
+  const size = formatSizes[format];
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
@@ -101,7 +94,10 @@ export default async function Page({
             designConfig: row.designConfig,
             imageUrl: row.imageUrl,
           }))}
-          previews={previews}
+          previews={elements}
+          thumbs={elements}
+          slideWidth={size.width}
+          slideHeight={size.height}
         />
       </div>
     </main>
