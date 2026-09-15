@@ -55,3 +55,35 @@ describe("highlightCode", () => {
     expect(cache.shikiHighlighter).toBe(first);
   });
 });
+
+describe("tokenisation cache", () => {
+  it(
+    "returns the same lines for the same snippet, theme and language",
+    { timeout: 60_000 },
+    async () => {
+      const code = "select 1;";
+      const first = await highlightCode(code, "sql", "dark");
+      const second = await highlightCode(code, "sql", "dark");
+
+      // Same array instance: the second call never reached Shiki.
+      expect(second).toBe(first);
+    },
+  );
+
+  it("does not reuse tokens across themes", { timeout: 60_000 }, async () => {
+    const code = "const cached = true;";
+    const dark = await highlightCode(code, "ts", "dark");
+    const light = await highlightCode(code, "ts", "light");
+
+    expect(light).not.toBe(dark);
+    expect(light[0][0].color).not.toBe(dark[0][0].color);
+  });
+
+  it("does not reuse tokens across languages", { timeout: 60_000 }, async () => {
+    const code = "print(1)";
+    const python = await highlightCode(code, "python", "dark");
+    const ruby = await highlightCode(code, "ruby", "dark");
+
+    expect(ruby).not.toBe(python);
+  });
+});

@@ -437,12 +437,32 @@ page, and the filmstrip needs to lead.
 
 ## Round 9: performance
 
-- [ ] Stop re-rendering every slide on every mutation. Autosave plus all eight `run()` call sites plus `post-status` end in `router.refresh()`, which re-executes the page and re-renders all N previews from scratch, re-running Shiki on every code slide, of which N-1 are immediately hidden. One 900ms typing pause costs 1 DB round trip and N full slide renders
-- [ ] Throttle the `fontScale` range and the color inputs, which fire continuously during a drag (`slide-design.tsx:42,71`)
-- [ ] Consider an optimistic client preview. `slideElement` is pure and could run in the browser, removing the 900ms-plus-server-render lag between typing and seeing
-- [ ] Ship woff2 subsets to the browser and keep the TTFs server-side for Satori. `public/fonts/` is **1.63 MB** across ten unsubsetted TTFs (Inter alone is 651 KB for two faces, versus roughly 15 to 25 KB per woff2 Latin subset). This does not touch the fixed-font-list decision, only the transport
-- [ ] Add `rel="preload"` for the two faces the active kit actually uses
-- [ ] Drop the unnecessary `"use client"` from `slide-fields.tsx` and `slide-design.tsx`. Both are prop-driven render functions with no hooks and no browser API
+**Status: mostly done**, with the woff2 conversion left open and explained
+below. `pnpm typecheck`, `pnpm lint`, `pnpm test` (243 passing, 3 new) and
+`pnpm build` all green.
+
+- [x] Stop re-rendering every slide on every mutation, in the part that actually costs: Shiki tokenisation is now memoised, so a refresh re-runs the JSX but not the highlighter
+- [x] Throttle the `fontScale` range and the color inputs, which fire continuously during a drag (`slide-design.tsx:42,71`)
+- [x] Add `rel="preload"` for the two faces the active kit actually uses
+- [x] Drop the unnecessary `"use client"` from `slide-fields.tsx`
+- [ ] Ship woff2 subsets to the browser and keep the TTFs server-side for Satori. **Not done, and not fakeable here**: converting TTF to woff2 needs `fonttools` or `woff2_compress`, and neither is installed on this machine. `public/fonts/` is still **1.63 MB** across ten unsubsetted TTFs. The remedy, for whoever has the tooling: `pyftsubset <file>.ttf --flavor=woff2 --unicodes=U+0000-00FF,U+2000-206F --output-file=<file>.woff2`, then add a `woff2` `src` ahead of the `truetype` one in `globals.css`. Satori keeps reading the TTFs, so `server/render/fonts.ts` does not change
+- [ ] An optimistic client preview. `slideElement` is pure and could run in the browser, but it reaches `templates/`, which pulls the font metrics table into the bundle. Worth its own decision rather than a quiet refactor
+- [ ] `slide-design.tsx` keeps its `"use client"`: it now holds local state for the throttle, so the directive is correct
+
+The refresh storm has two halves, and only one of them was ever the expensive
+one. Re-running the JSX for N slides is cheap; re-tokenising every code slide
+through Shiki is not. `highlightCode` now keeps a bounded 200-entry cache keyed
+on theme, language and the snippet itself, so the editor's repeated re-renders
+hit it instead. Three tests cover reuse and the two ways it must not reuse.
+
+The drag inputs now hold their own state and tell the draft once the drag
+settles, rather than restarting the editor's autosave timer sixty times a
+second.
+
+Font preloading is the other real win: ten `@font-face` rules are declared but a
+browser only fetches one when a glyph needs it, which is after CSS parse and
+layout. The signed-in layout now preloads exactly the two faces the user's kit
+uses.
 
 ---
 

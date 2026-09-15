@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +12,9 @@ const colorFields = [
   { key: "textColor", label: "Text" },
   { key: "accentColor", label: "Accent" },
 ] as const;
+
+/** Long enough to cover a colour drag, short enough to feel immediate. */
+const commitDelay = 250;
 
 export function SlideDesign({
   design,
@@ -26,7 +31,41 @@ export function SlideDesign({
     accentColor: fallback.accent,
   } as const;
 
-  const overridden = Object.keys(design).length > 0;
+  /*
+   * A native colour input fires while the OS picker is dragged, and a range
+   * fires on every tick. Passing each one straight up restarted the editor's
+   * autosave timer dozens of times a second. The control stays live locally and
+   * the draft hears about it once the drag settles.
+   */
+  const [local, setLocal] = useState(design);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sent = useRef(JSON.stringify(design));
+  const notify = useRef(onChange);
+  notify.current = onChange;
+
+  const incoming = JSON.stringify(design);
+
+  // Adopt the parent's value when it changed for some other reason, such as
+  // switching slides or undoing, but never when it is only echoing us back.
+  useEffect(() => {
+    if (incoming === sent.current) return;
+    sent.current = incoming;
+    setLocal(design);
+  }, [incoming, design]);
+
+  useEffect(() => () => clearTimeout(timer.current ?? undefined), []);
+
+  function update(next: SlideDesignConfig) {
+    setLocal(next);
+
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      sent.current = JSON.stringify(next);
+      notify.current(next);
+    }, commitDelay);
+  }
+
+  const overridden = Object.keys(local).length > 0;
 
   return (
     <div className="grid gap-4">
@@ -37,20 +76,20 @@ export function SlideDesign({
             <input
               type="color"
               id={key}
-              aria-label={`${label} colour`}
-              value={design[key] ?? defaults[key]}
-              onChange={(event) => onChange({ ...design, [key]: event.target.value })}
-              className="size-9 shrink-0 cursor-pointer rounded-md border bg-transparent p-1"
+              aria-label={`${label} color picker`}
+              value={local[key] ?? defaults[key]}
+              onChange={(event) => update({ ...local, [key]: event.target.value })}
+              className="size-10 shrink-0 cursor-pointer rounded-md border bg-transparent p-1"
             />
             <Input
-              value={design[key] ?? ""}
+              value={local[key] ?? ""}
               placeholder={defaults[key]}
               spellCheck={false}
               onChange={(event) => {
-                const next = { ...design };
+                const next = { ...local };
                 if (event.target.value) next[key] = event.target.value;
                 else delete next[key];
-                onChange(next);
+                update(next);
               }}
             />
           </div>
@@ -59,7 +98,7 @@ export function SlideDesign({
 
       <div className="grid gap-1.5">
         <Label htmlFor="fontScale">
-          Text size: {Math.round((design.fontScale ?? 1) * 100)}% of the Brand Kit
+          Text size: {Math.round((local.fontScale ?? 1) * 100)}% of the Brand Kit
         </Label>
         <Input
           id="fontScale"
@@ -67,8 +106,8 @@ export function SlideDesign({
           min={0.6}
           max={1.6}
           step={0.05}
-          value={design.fontScale ?? 1}
-          onChange={(event) => onChange({ ...design, fontScale: Number(event.target.value) })}
+          value={local.fontScale ?? 1}
+          onChange={(event) => update({ ...local, fontScale: Number(event.target.value) })}
         />
       </div>
 
@@ -80,10 +119,10 @@ export function SlideDesign({
               key={option}
               type="button"
               size="sm"
-              variant={(design.align ?? "left") === option ? "default" : "outline"}
-              onClick={() => onChange({ ...design, align: option })}
+              variant={(local.align ?? "left") === option ? "default" : "outline"}
+              onClick={() => update({ ...local, align: option })}
             >
-              {option === "left" ? "Left" : "Centre"}
+              {option === "left" ? "Left" : "Center"}
             </Button>
           ))}
         </div>
@@ -95,7 +134,7 @@ export function SlideDesign({
           variant="ghost"
           size="sm"
           className="justify-self-start"
-          onClick={() => onChange({})}
+          onClick={() => update({})}
         >
           Reset to the Brand Kit
         </Button>

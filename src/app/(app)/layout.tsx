@@ -5,13 +5,25 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
 import { requireUserId } from "@/server/auth";
+import { loadBrandKit } from "@/server/brand";
+import { brandFontUrls } from "@/server/render/fonts";
 
 /** Guards every signed-in page. */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  await requireUserId();
+  const userId = await requireUserId();
+  const brand = await loadBrandKit(userId);
 
   return (
     <div className="min-h-dvh">
+      {/*
+        globals.css declares ten @font-face rules, and a browser only fetches one
+        once a glyph needs it, which is after CSS parse and layout. These two are
+        the ones every preview on the page will want.
+      */}
+      {brandFontUrls(brand).map((href) => (
+        <link key={href} rel="preload" as="font" type="font/ttf" href={href} crossOrigin="" />
+      ))}
+
       {/* First thing in the tab order, so keyboard users can skip the nav. */}
       <a
         href="#main"
