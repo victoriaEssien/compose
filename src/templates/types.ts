@@ -16,4 +16,6 @@ export type SlideRenderContext<K extends TemplateKind = TemplateKind> = {
   codeLines: CodeLine[] | null;
   /** Resolved from assetId before rendering. */
   imageUrl: string | null;
+  /** A generated illustration for the visual hint, when one has been made. */
+  illustrationUrl: string | null;
 };

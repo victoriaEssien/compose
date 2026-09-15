@@ -39,6 +39,24 @@ export async function uploadUserFile(userId: string, file: File): Promise<Upload
   return { ok: true, url: blob.url };
 }
 
+/** Skips the upload checks: these bytes came from our own image model, not a user. */
+export async function uploadGeneratedImage(
+  userId: string,
+  bytes: Buffer,
+  contentType: string,
+): Promise<UploadResult> {
+  const token = env().BLOB_READ_WRITE_TOKEN;
+  if (!token) return { ok: false, error: missingToken };
+
+  const blob = await put(`users/${userId}/illustrations/${crypto.randomUUID()}.png`, bytes, {
+    access: "public",
+    contentType,
+    token,
+  });
+
+  return { ok: true, url: blob.url };
+}
+
 export async function deleteUserFile(url: string) {
   // Without a token nothing was ever uploaded, so there is no blob to orphan.
   const token = env().BLOB_READ_WRITE_TOKEN;

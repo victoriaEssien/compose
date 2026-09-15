@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { generateIllustration } from "@/server/ai/illustration";
 import { regenerateSlide } from "@/server/ai/regenerate";
 import { AiError } from "@/server/ai/structured";
 import { requireUserId } from "@/server/auth";
@@ -12,8 +13,10 @@ import {
   duplicateSlide,
   loadSlide,
   reorderSlides,
+  setSlideIllustration,
   updateSlide,
 } from "@/server/slides";
+import { uploadGeneratedImage } from "@/server/storage/blob";
 import { remapSlide } from "@/templates";
 import { postStatusSchema } from "@/types/post";
 import {
@@ -181,6 +184,51 @@ export async function setPostStatusAction(
   if (!parsed.success) return { ok: false, error: "That is not a status." };
 
   if (!(await setPostStatus(userId, postId, parsed.data))) return missing;
+
+  revalidate(postId);
+  return done;
+}
+
+export async function generateIllustrationAction(
+  postId: string,
+  slideId: string,
+): Promise<SlideActionResult> {
+  const userId = await requireUserId();
+
+  const [slide, brand] = await Promise.all([
+    loadSlide(userId, postId, slideId),
+    loadBrandKit(userId),
+  ]);
+  if (!slide) return missing;
+
+  const hint = slide.content.visual;
+  if (!hint) return { ok: false, error: "Give the slide a visual hint first." };
+
+  let image;
+  try {
+    image = await generateIllustration(hint, brand);
+  } catch (failure) {
+    console.error("generateIllustration failed", failure);
+    return { ok: false, error: "The image model did not respond. Try again." };
+  }
+  if (!image.ok) return { ok: false, error: image.error };
+
+  const upload = await uploadGeneratedImage(userId, image.bytes, image.contentType);
+  if (!upload.ok) return { ok: false, error: upload.error };
+
+  await setSlideIllustration(userId, postId, slideId, upload.url);
+  revalidate(postId);
+
+  return done;
+}
+
+export async function removeIllustrationAction(
+  postId: string,
+  slideId: string,
+): Promise<SlideActionResult> {
+  const userId = await requireUserId();
+
+  if (!(await setSlideIllustration(userId, postId, slideId, null))) return missing;
 
   revalidate(postId);
   return done;

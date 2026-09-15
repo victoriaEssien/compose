@@ -16,14 +16,16 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { AssetRow } from "@/server/db/schema";
-import { templateList } from "@/templates";
+import { resolveIcon, templateList } from "@/templates";
 import { regenerateActions, templateKinds } from "@/types/slide";
 import type { RegenerateAction, SlideDesignConfig, SlideSpec, TemplateKind } from "@/types/slide";
 import {
   changeTemplateAction,
   deleteSlideAction,
   duplicateSlideAction,
+  generateIllustrationAction,
   regenerateSlideAction,
+  removeIllustrationAction,
   reorderSlidesAction,
   saveSlideAction,
 } from "./actions";
@@ -35,6 +37,7 @@ export type EditableSlide = {
   template: TemplateKind;
   content: SlideSpec;
   designConfig: SlideDesignConfig | null;
+  imageUrl: string | null;
 };
 
 const regenerateLabels: Record<RegenerateAction, string> = {
@@ -135,6 +138,12 @@ export function PostEditor({
   }
 
   const canTakeAsset = draft.template === "screenshot" || draft.template === "project";
+  const matchedIcon = resolveIcon(draft.visual);
+  const visualHelp = slide.imageUrl
+    ? "Showing a generated illustration."
+    : matchedIcon
+      ? `Showing the ${matchedIcon} icon.`
+      : "No icon matches this hint. Generate an illustration, or try another word.";
 
   return (
     <div className="grid gap-10 lg:grid-cols-[420px_1fr]">
@@ -253,6 +262,29 @@ export function PostEditor({
             placeholder="database_icon"
             onChange={(event) => setDraft({ ...draft, visual: event.target.value || null })}
           />
+          <p className="text-muted-foreground text-xs">{visualHelp}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={busy || !draft.visual}
+              onClick={() => run(() => generateIllustrationAction(postId, slide.id))}
+            >
+              {busy ? "Working..." : "Generate illustration"}
+            </Button>
+            {slide.imageUrl && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={busy}
+                onClick={() => run(() => removeIllustrationAction(postId, slide.id))}
+              >
+                Remove illustration
+              </Button>
+            )}
+          </div>
         </div>
 
         {canTakeAsset && (

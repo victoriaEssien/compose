@@ -115,7 +115,7 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 
 - [x] **Renderer.** Decided: `next/og` (Satori), documented in `AGENTS.md`. Templates are flexbox JSX with inline styles, fonts ship as TTFs in `public/fonts/`.
 - [x] **Sign-in methods** for Better Auth. Decided: email and password only. No OAuth app to register and Better Auth keeps users in our own Postgres. GitHub or magic links can be added later without a migration.
-- [ ] **Image generation** model and where it's allowed (illustrations, backgrounds, avatars only; never text).
+- [x] **Image generation.** Decided: `gpt-image-1-mini`, transparent PNG, for the `visual` hint only and never automatically. Bundled icons cover the common hints; generation is a per-slide action in the editor.
 - [x] **Code highlighting.** Decided: Shiki, tokenised on the server and drawn as coloured spans.
 
 ## Backlog (post-MVP, do not start unless asked)

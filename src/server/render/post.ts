@@ -28,6 +28,7 @@ export async function loadRenderablePost(userId: string, postId: string) {
   const inputs: SlideInput[] = found.slides.map((row, index) => ({
     content: row.content,
     designConfig: row.designConfig,
+    imageUrl: row.imageUrl,
     index,
   }));
 

@@ -1,4 +1,5 @@
-import { Body, CodeBlock, Eyebrow, Frame, Heading, Surface } from "./primitives";
+import { resolveIcon } from "./icons";
+import { Body, CodeBlock, Eyebrow, Frame, Heading, Illustration, Surface } from "./primitives";
 import type { TemplateKind } from "@/types/slide";
 import type { SlideRenderContext } from "./types";
 
@@ -9,6 +10,9 @@ function Shell<K extends TemplateKind>({
   context: SlideRenderContext<K>;
   children: React.ReactNode;
 }) {
+  const icon = resolveIcon(context.slide.visual);
+  const mark = context.illustrationUrl ?? (icon ? true : null);
+
   return (
     <Frame
       theme={context.theme}
@@ -17,6 +21,11 @@ function Shell<K extends TemplateKind>({
       index={context.index}
       total={context.total}
     >
+      {mark && (
+        <div style={{ display: "flex", marginBottom: 40 }}>
+          <Illustration theme={context.theme} icon={icon} imageUrl={context.illustrationUrl} />
+        </div>
+      )}
       {children}
     </Frame>
   );

@@ -13,6 +13,7 @@ import { satoriFonts } from "./fonts";
 export type SlideInput = {
   content: SlideSpec;
   designConfig: SlideDesignConfig | null;
+  imageUrl: string | null;
   index: number;
 };
 
@@ -46,6 +47,7 @@ export async function slideElement(
     total,
     codeLines,
     imageUrl: assetId ? (assetUrls.get(assetId) ?? null) : null,
+    illustrationUrl: input.imageUrl,
   });
 }
 

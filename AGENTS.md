@@ -45,6 +45,16 @@ What Satori accepts, and what it does not:
 - Syntax highlighting is pre-tokenised by Shiki on the server
   (`src/server/render/highlight.ts`), because Satori cannot await anything.
 
+The `visual` hint resolves in two steps. `resolveIcon()` (`src/templates/icons.ts`)
+maps it onto a bundled icon: free, instant and exactly on-brand. When nothing
+matches, the editor can generate a transparent PNG through
+`src/server/ai/illustration.ts`, stored on `slide.imageUrl`. Generation is never
+automatic, because it costs money and takes seconds.
+
+Icon shape data lives in `src/templates/icon-nodes.ts`, lifted from lucide. Never
+import a lucide component into a template: Satori cannot resolve React components
+and silently draws nothing.
+
 Formats are 1080x1350 (carousel) and 1080x1080 (square). Per-slide overrides in
 `designConfig` are merged over the Brand Kit by `slideTheme()`; templates read the
 resolved theme, never the Brand Kit directly.

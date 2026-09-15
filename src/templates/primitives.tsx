@@ -1,4 +1,8 @@
+import { createElement } from "react";
 import type { CSSProperties, ReactNode } from "react";
+
+import { iconNodes } from "./icon-nodes";
+import type { IconName } from "./icon-nodes";
 
 import type { SlideTheme } from "./theme";
 import type { CodeLine } from "./types";
@@ -228,5 +232,51 @@ export function CodeBlock({
         </div>
       ))}
     </div>
+  );
+}
+
+/**
+ * Satori cannot resolve React components, so lucide icons are drawn from stored
+ * shape data as intrinsic SVG elements instead.
+ */
+export function Illustration({
+  theme,
+  icon,
+  imageUrl,
+  size = 72,
+}: {
+  theme: SlideTheme;
+  icon: IconName | null;
+  imageUrl: string | null;
+  size?: number;
+}) {
+  if (imageUrl) {
+    return (
+      // Transparent PNG, so it is contained on the brand background rather than cropped.
+      <img
+        src={imageUrl}
+        width={size * 2}
+        height={size * 2}
+        style={{ objectFit: "contain" }}
+        alt=""
+      />
+    );
+  }
+
+  if (!icon) return null;
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={theme.colors.accent}
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {iconNodes[icon].map(([tag, attrs], index) => createElement(tag, { key: index, ...attrs }))}
+    </svg>
   );
 }

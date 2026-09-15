@@ -6,6 +6,7 @@ import type { BatchItem } from "drizzle-orm/batch";
 import type { SlideDesignConfig, SlideSpec } from "@/types/slide";
 import { db } from "./db/client";
 import { post, slide } from "./db/schema";
+import { deleteUserFile } from "./storage/blob";
 
 export async function ownsPost(userId: string, postId: string) {
   const [row] = await db()
@@ -126,4 +127,24 @@ async function writeOrder(postId: string, orderedIds: string[]) {
 
   // batch() wants a non-empty tuple, which a mapped array cannot prove.
   await db().batch(statements as unknown as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
+}
+
+/** The generated illustration for a slide. Replacing one removes the old blob. */
+export async function setSlideIllustration(
+  userId: string,
+  postId: string,
+  slideId: string,
+  imageUrl: string | null,
+) {
+  const current = await loadSlide(userId, postId, slideId);
+  if (!current) return false;
+
+  await db()
+    .update(slide)
+    .set({ imageUrl })
+    .where(and(eq(slide.id, slideId), eq(slide.postId, postId)));
+
+  if (current.imageUrl && current.imageUrl !== imageUrl) await deleteUserFile(current.imageUrl);
+
+  return true;
 }

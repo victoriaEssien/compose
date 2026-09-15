@@ -99,6 +99,7 @@ export default async function Page({
             template: row.template,
             content: row.content,
             designConfig: row.designConfig,
+            imageUrl: row.imageUrl,
           }))}
           previews={previews}
         />

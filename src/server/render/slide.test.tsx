@@ -26,7 +26,7 @@ const kinds = Object.keys(fixtures) as TemplateKind[];
 describe("slidePng", () => {
   it.each(kinds)("draws the %s template at carousel size", { timeout: 120_000 }, async (kind) => {
     const response = await slidePng(
-      { content: fixtures[kind], designConfig: null, index: 2 },
+      { content: fixtures[kind], designConfig: null, imageUrl: null, index: 2 },
       brand,
       "carousel",
       9,
@@ -39,7 +39,7 @@ describe("slidePng", () => {
 
   it("draws the square format at square size", { timeout: 120_000 }, async () => {
     const response = await slidePng(
-      { content: fixtures.cover, designConfig: null, index: 0 },
+      { content: fixtures.cover, designConfig: null, imageUrl: null, index: 0 },
       brand,
       "square",
       1,
@@ -53,7 +53,7 @@ describe("slidePng", () => {
 describe("slideElement", () => {
   it.each(kinds)("lays the %s template out the same way every time", async (kind) => {
     const element = await slideElement(
-      { content: fixtures[kind], designConfig: null, index: 2 },
+      { content: fixtures[kind], designConfig: null, imageUrl: null, index: 2 },
       brand,
       "carousel",
       9,
@@ -67,6 +67,7 @@ describe("slideElement", () => {
       {
         content: fixtures.cover,
         designConfig: { backgroundColor: "#FFFFFF", textColor: "#111111", align: "center" },
+        imageUrl: null,
         index: 0,
       },
       brand,
