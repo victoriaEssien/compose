@@ -165,9 +165,9 @@ export function SignInForm() {
   );
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full">
       <CardHeader>
-        <h1 className="leading-none font-semibold">{title}</h1>
+        <h1 className="font-display text-xl leading-none font-semibold">{title}</h1>
         <CardDescription>Compose turns your rough notes into on-brand posts.</CardDescription>
       </CardHeader>
       <CardContent>

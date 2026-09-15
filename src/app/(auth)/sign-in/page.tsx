@@ -7,8 +7,8 @@ export default async function Page() {
   if (await currentUserId()) redirect("/dashboard");
 
   return (
-    <main className="flex min-h-dvh items-center justify-center px-6 py-10">
+    <div className="w-full max-w-sm">
       <SignInForm />
-    </main>
+    </div>
   );
 }

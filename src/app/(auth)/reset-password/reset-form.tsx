@@ -44,9 +44,9 @@ export function ResetForm({ token }: { token: string | null }) {
 
   if (!token) {
     return (
-      <Card className="w-full max-w-sm">
+      <Card className="w-full">
         <CardHeader>
-          <h1 className="leading-none font-semibold">This link is incomplete</h1>
+          <h1 className="font-display text-xl leading-none font-semibold">This link is incomplete</h1>
           <CardDescription>
             Reset links work once and expire after an hour. Ask for a fresh one and open it straight
             from the email.
@@ -62,9 +62,9 @@ export function ResetForm({ token }: { token: string | null }) {
   }
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full">
       <CardHeader>
-        <h1 className="leading-none font-semibold">Choose a new password</h1>
+        <h1 className="font-display text-xl leading-none font-semibold">Choose a new password</h1>
         <CardDescription>You will be signed in with it from now on.</CardDescription>
       </CardHeader>
       <CardContent>

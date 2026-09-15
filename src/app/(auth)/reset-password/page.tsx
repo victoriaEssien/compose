@@ -8,8 +8,8 @@ export default async function Page({
   const { token } = await searchParams;
 
   return (
-    <main className="flex min-h-dvh items-center justify-center px-6 py-10">
+    <div className="w-full max-w-sm">
       <ResetForm token={token ?? null} />
-    </main>
+    </div>
   );
 }

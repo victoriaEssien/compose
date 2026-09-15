@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { formatSizes } from "@/templates";
 import type { SlideFormat } from "@/templates";
 import type { SlideInput } from "@/server/render/slide";
@@ -15,6 +16,7 @@ export async function SlidePreview({
   total,
   assetUrls,
   width,
+  className,
 }: {
   input: SlideInput;
   brand: BrandKit;
@@ -22,6 +24,8 @@ export async function SlidePreview({
   total: number;
   assetUrls: Map<string, string>;
   width: number;
+  /** For callers that frame the slide themselves, such as the landing page deck. */
+  className?: string;
 }) {
   const element = await slideElement(input, brand, format, total, assetUrls);
   const size = formatSizes[format];
@@ -29,7 +33,7 @@ export async function SlidePreview({
 
   return (
     <div
-      className="overflow-hidden rounded-xl border"
+      className={cn("overflow-hidden rounded-xl border", className)}
       style={{ width, height: Math.round(size.height * scale) }}
     >
       <div
