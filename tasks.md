@@ -56,15 +56,15 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 
 ## Phase 4: AI pipeline
 
-- [ ] OpenAI client wrapper in `src/server/ai/` behind a small provider interface
-- [ ] Structured output helper: call model with a Zod schema, validate, retry once on invalid output, surface a clean error
-- [ ] Content Analyzer (spec section 17): topic, audience, tone, post type, complexity, suggested slide count
-- [ ] Content Structurer: hook, body, supporting points, conclusion, CTA
-- [ ] Design Planner: slide count, template per slide, visual suggestion, text hierarchy. Must only use registered templates
-- [ ] Prompts live in versioned files in `src/server/ai/prompts/`, include Brand Kit + brand voice
-- [ ] Text length limits per template enforced in the schema (no overcrowded slides)
-- [ ] `generatePost(input, brand)` orchestration: analyze → structure → plan → validated `PostSpec`
-- [ ] Tests with mocked model responses (valid, invalid, retry)
+- [x] OpenAI client wrapper in `src/server/ai/` behind a small provider interface
+- [x] Structured output helper: call model with a Zod schema, validate, retry once on invalid output, surface a clean error
+- [x] Content Analyzer (spec section 17): topic, audience, tone, post type, complexity, suggested slide count
+- [x] Content Structurer: hook, body, supporting points, conclusion, CTA
+- [x] Design Planner: slide count, template per slide, visual suggestion, text hierarchy. Must only use registered templates
+- [x] Prompts live in versioned files in `src/server/ai/prompts/`, include Brand Kit + brand voice
+- [x] Text length limits per template enforced in the schema (no overcrowded slides)
+- [x] `generatePost(input, brand)` orchestration: analyze → structure → plan → validated `PostSpec`
+- [x] Tests with mocked model responses (valid, invalid, retry)
 
 ## Phase 5: Create Post flow
 

@@ -44,3 +44,13 @@ export const postSpecSchema = z
   });
 
 export type PostSpec = z.infer<typeof postSpecSchema>;
+
+/** What the Create Post screen submits (spec section 22). */
+export const generatePostInputSchema = z.object({
+  content: z.string().min(20).max(6000),
+  context: z.string().max(1000).nullable(),
+  postType: postTypeRequestSchema,
+  tone: z.string().max(60).nullable(),
+});
+
+export type GeneratePostInput = z.infer<typeof generatePostInputSchema>;

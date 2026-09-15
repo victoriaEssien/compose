@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { maxSlides, postSpecSchema, postTypeRequestSchema, postTypeSchema } from "./post";
 import { slideSpecSchema, slideTextLimits, templateKinds } from "./slide";
-import type { SlideSpec, TemplateKind } from "./slide";
+import type { SlideSpec, SlideSpecOf, TemplateKind } from "./slide";
 
 const coverSlide: SlideSpec = {
   template: "cover",
@@ -19,7 +19,7 @@ const textSlide: SlideSpec = {
 };
 
 /** One fixture per registered template, so the union is exercised end to end. */
-const slideFixtures: Record<TemplateKind, SlideSpec> = {
+const slideFixtures: { [K in TemplateKind]: SlideSpecOf<K> } = {
   cover: coverSlide,
   text: textSlide,
   numbered_list: {
@@ -146,6 +146,23 @@ describe("postSpecSchema", () => {
 
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual(["slides", 0, "headline"]);
+  });
+
+  it("rejects copy that smuggles layout in as line breaks", () => {
+    const body = "Measure first.\nThen cache.";
+
+    const result = postSpecSchema.safeParse(postSpec([{ ...textSlide, body }]));
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toMatch(/no line breaks/);
+  });
+
+  it("still allows line breaks inside a code slide", () => {
+    const code = "create index concurrently on post (user_id);\nanalyze post;";
+
+    const result = postSpecSchema.safeParse(postSpec([{ ...slideFixtures.code, code }]));
+
+    expect(result.success).toBe(true);
   });
 
   it("rejects a slideCount that disagrees with the slides", () => {

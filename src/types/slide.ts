@@ -46,6 +46,19 @@ export const slideTextLimits = {
 
 export const maxListItems = 5;
 
+// Layout belongs to the renderer, so copy cannot smuggle it in as line breaks.
+// Code is the one field where newlines are the content.
+const line = (max: number) =>
+  z
+    .string()
+    .max(max)
+    .refine((value) => !/[\r\n]/.test(value), {
+      message: "must be one paragraph, with no line breaks",
+    });
+
+const requiredLine = (max: number) =>
+  line(max).refine((value) => value.length > 0, { message: "must not be empty" });
+
 /** A hint for the renderer or image step, e.g. "database_icon". Never rendered as text. */
 export const visualHintSchema = z.string().min(1).max(slideTextLimits.visual);
 
@@ -56,47 +69,47 @@ const commonShape = {
 export const coverSlideSchema = z.object({
   ...commonShape,
   template: z.literal("cover"),
-  headline: z.string().min(1).max(slideTextLimits.headline),
-  subheadline: z.string().max(slideTextLimits.subheadline).nullable(),
+  headline: requiredLine(slideTextLimits.headline),
+  subheadline: line(slideTextLimits.subheadline).nullable(),
 });
 
 export const textSlideSchema = z.object({
   ...commonShape,
   template: z.literal("text"),
-  heading: z.string().min(1).max(slideTextLimits.heading),
-  body: z.string().min(1).max(slideTextLimits.body),
+  heading: requiredLine(slideTextLimits.heading),
+  body: requiredLine(slideTextLimits.body),
 });
 
 export const listItemSchema = z.object({
-  title: z.string().min(1).max(slideTextLimits.itemTitle),
-  body: z.string().max(slideTextLimits.itemBody).nullable(),
+  title: requiredLine(slideTextLimits.itemTitle),
+  body: line(slideTextLimits.itemBody).nullable(),
 });
 
 export const numberedListSlideSchema = z.object({
   ...commonShape,
   template: z.literal("numbered_list"),
-  heading: z.string().max(slideTextLimits.heading).nullable(),
+  heading: line(slideTextLimits.heading).nullable(),
   items: z.array(listItemSchema).min(2).max(maxListItems),
 });
 
 export const codeSlideSchema = z.object({
   ...commonShape,
   template: z.literal("code"),
-  heading: z.string().max(slideTextLimits.heading).nullable(),
+  heading: line(slideTextLimits.heading).nullable(),
   language: z.string().min(1).max(slideTextLimits.language),
   code: z.string().min(1).max(slideTextLimits.code),
-  explanation: z.string().max(slideTextLimits.explanation).nullable(),
+  explanation: line(slideTextLimits.explanation).nullable(),
 });
 
 export const comparisonSideSchema = z.object({
-  label: z.string().min(1).max(slideTextLimits.comparisonLabel),
-  body: z.string().min(1).max(slideTextLimits.comparisonBody),
+  label: requiredLine(slideTextLimits.comparisonLabel),
+  body: requiredLine(slideTextLimits.comparisonBody),
 });
 
 export const comparisonSlideSchema = z.object({
   ...commonShape,
   template: z.literal("comparison"),
-  heading: z.string().max(slideTextLimits.heading).nullable(),
+  heading: line(slideTextLimits.heading).nullable(),
   left: comparisonSideSchema,
   right: comparisonSideSchema,
 });
@@ -104,24 +117,24 @@ export const comparisonSlideSchema = z.object({
 export const quoteSlideSchema = z.object({
   ...commonShape,
   template: z.literal("quote"),
-  quote: z.string().min(1).max(slideTextLimits.quote),
-  attribution: z.string().max(slideTextLimits.attribution).nullable(),
+  quote: requiredLine(slideTextLimits.quote),
+  attribution: line(slideTextLimits.attribution).nullable(),
 });
 
 export const screenshotSlideSchema = z.object({
   ...commonShape,
   template: z.literal("screenshot"),
-  heading: z.string().max(slideTextLimits.heading).nullable(),
+  heading: line(slideTextLimits.heading).nullable(),
   /** Set by the user in the editor; the AI always emits null. */
   assetId: z.uuid().nullable(),
-  caption: z.string().max(slideTextLimits.caption).nullable(),
+  caption: line(slideTextLimits.caption).nullable(),
 });
 
 export const projectSlideSchema = z.object({
   ...commonShape,
   template: z.literal("project"),
-  name: z.string().min(1).max(slideTextLimits.projectName),
-  description: z.string().min(1).max(slideTextLimits.projectDescription),
+  name: requiredLine(slideTextLimits.projectName),
+  description: requiredLine(slideTextLimits.projectDescription),
   /** Set by the user in the editor; the AI always emits null. */
   assetId: z.uuid().nullable(),
   url: z.url().nullable(),
@@ -130,9 +143,9 @@ export const projectSlideSchema = z.object({
 export const finalSlideSchema = z.object({
   ...commonShape,
   template: z.literal("final"),
-  heading: z.string().min(1).max(slideTextLimits.heading),
-  body: z.string().max(slideTextLimits.finalBody).nullable(),
-  cta: z.string().min(1).max(slideTextLimits.cta),
+  heading: requiredLine(slideTextLimits.heading),
+  body: line(slideTextLimits.finalBody).nullable(),
+  cta: requiredLine(slideTextLimits.cta),
 });
 
 export const slideSpecSchema = z.discriminatedUnion("template", [
