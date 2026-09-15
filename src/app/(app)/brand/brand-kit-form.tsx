@@ -16,7 +16,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import type { AssetRow } from "@/server/db/schema";
 import type { BrandKit } from "@/types/brand";
-import { cardStyles, codeBlockStyles, illustrationStyles } from "@/types/brand";
+import { cardStyles, codeBlockStyles, fontFamilies, illustrationStyles } from "@/types/brand";
 import { saveBrandKitAction } from "./actions";
 import { BrandPreview } from "./brand-preview";
 
@@ -128,24 +128,33 @@ export function BrandKitForm({ initial, assets }: { initial: BrandKit; assets: A
         </section>
 
         <section className="grid gap-4 sm:grid-cols-2">
-          <div className="grid gap-2">
-            <Label htmlFor="fontPrimary">Primary font</Label>
-            <Input
-              id="fontPrimary"
-              value={kit.fonts.primary}
-              onChange={(e) => set("fonts", { ...kit.fonts, primary: e.target.value })}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="fontSecondary">Secondary font</Label>
-            <Input
-              id="fontSecondary"
-              value={kit.fonts.secondary}
-              onChange={(e) => set("fonts", { ...kit.fonts, secondary: e.target.value })}
-              required
-            />
-          </div>
+          {(["primary", "secondary"] as const).map((slot) => (
+            <div key={slot} className="grid gap-2">
+              <Label htmlFor={slot + "Font"}>
+                {slot === "primary" ? "Primary" : "Secondary"} font
+              </Label>
+              <Select
+                value={kit.fonts[slot]}
+                onValueChange={(value) =>
+                  set("fonts", { ...kit.fonts, [slot]: value as BrandKit["fonts"]["primary"] })
+                }
+              >
+                <SelectTrigger id={slot + "Font"} className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {fontFamilies.map((family) => (
+                    <SelectItem key={family} value={family}>
+                      {family}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
+          <p className="text-muted-foreground text-xs sm:col-span-2">
+            Only these fonts can be rendered into a PNG, so the list is fixed.
+          </p>
         </section>
 
         <section className="grid gap-4 sm:grid-cols-2">

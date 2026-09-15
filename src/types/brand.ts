@@ -5,7 +5,16 @@ export const hexColorSchema = z
   .string()
   .regex(/^#[0-9a-fA-F]{6}$/, "Expected a 6-digit hex color, for example #101014");
 
-export const fontFamilySchema = z.string().min(1).max(60);
+/** Only fonts whose TTF files ship in the repo, because Satori needs the bytes. */
+export const fontFamilies = [
+  "Inter",
+  "Space Grotesk",
+  "IBM Plex Sans",
+  "Playfair Display",
+  "JetBrains Mono",
+] as const;
+
+export const fontFamilySchema = z.enum(fontFamilies);
 
 export const cardStyles = ["flat", "outlined", "elevated", "glass"] as const;
 export const illustrationStyles = ["none", "line", "flat", "isometric", "three_d"] as const;
@@ -53,6 +62,7 @@ export type BrandFonts = z.infer<typeof brandFontsSchema>;
 export type BrandColors = z.infer<typeof brandColorsSchema>;
 export type BrandStyle = z.infer<typeof brandStyleSchema>;
 export type BrandKit = z.infer<typeof brandKitSchema>;
+export type FontFamily = z.infer<typeof fontFamilySchema>;
 export type CardStyle = z.infer<typeof cardStyleSchema>;
 export type IllustrationStyle = z.infer<typeof illustrationStyleSchema>;
 export type CodeBlockStyle = z.infer<typeof codeBlockStyleSchema>;

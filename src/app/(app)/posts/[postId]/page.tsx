@@ -1,84 +1,92 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { SlidePreview } from "@/components/slide-preview";
+import { Button } from "@/components/ui/button";
 import { requireUserId } from "@/server/auth";
-import { loadPost } from "@/server/posts";
-import type { SlideSpec } from "@/types/slide";
+import { loadRenderablePost, parseFormat } from "@/server/render/post";
+import { templates } from "@/templates";
+import { SlideCarousel } from "./slide-carousel";
 
 const statusLabels = { draft: "Draft", ready: "Ready", exported: "Exported" } as const;
+const previewWidth = 380;
 
-/** Plain text stand-in until the renderer lands (Phase 6). */
-function summarize(content: SlideSpec): { primary: string; secondary: string | null } {
-  switch (content.template) {
-    case "cover":
-      return { primary: content.headline, secondary: content.subheadline };
-    case "text":
-      return { primary: content.heading, secondary: content.body };
-    case "numbered_list":
-      return {
-        primary: content.heading ?? "Numbered list",
-        secondary: content.items.map((item) => item.title).join(" / "),
-      };
-    case "code":
-      return { primary: content.heading ?? content.language, secondary: content.explanation };
-    case "comparison":
-      return {
-        primary: content.heading ?? `${content.left.label} vs ${content.right.label}`,
-        secondary: `${content.left.body} / ${content.right.body}`,
-      };
-    case "quote":
-      return { primary: content.quote, secondary: content.attribution };
-    case "screenshot":
-      return { primary: content.heading ?? "Screenshot", secondary: content.caption };
-    case "project":
-      return { primary: content.name, secondary: content.description };
-    case "final":
-      return { primary: content.heading, secondary: content.cta };
-  }
-}
-
-export default async function Page({ params }: { params: Promise<{ postId: string }> }) {
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ postId: string }>;
+  searchParams: Promise<{ format?: string }>;
+}) {
   const userId = await requireUserId();
   const { postId } = await params;
-  const found = await loadPost(userId, postId);
+  const found = await loadRenderablePost(userId, postId);
 
   if (!found) notFound();
 
-  const { post, slides } = found;
+  const format = parseFormat((await searchParams).format ?? null);
+  const { post, slides, inputs, brand, assetUrls } = found;
+
+  const previews = await Promise.all(
+    inputs.map((input) => (
+      <SlidePreview
+        key={input.index}
+        input={input}
+        brand={brand}
+        format={format}
+        total={inputs.length}
+        assetUrls={assetUrls}
+        width={previewWidth}
+      />
+    )),
+  );
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <p className="text-muted-foreground text-xs">
-        {statusLabels[post.status]} · {post.type.replaceAll("_", " ")} · {slides.length} slides
-      </p>
-      <h1 className="mt-2 text-2xl font-semibold">{post.title}</h1>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-muted-foreground text-xs">
+            {statusLabels[post.status]} · {post.type.replaceAll("_", " ")} · {slides.length} slides
+          </p>
+          <h1 className="mt-2 text-2xl font-semibold">{post.title}</h1>
+        </div>
 
-      <ol className="mt-8 flex flex-col gap-3">
-        {slides.map((slide) => {
-          const { primary, secondary } = summarize(slide.content);
+        <div className="flex items-center gap-2">
+          {(["carousel", "square"] as const).map((option) => (
+            <Button
+              key={option}
+              asChild
+              size="sm"
+              variant={option === format ? "default" : "outline"}
+            >
+              <Link href={`/posts/${post.id}?format=${option}`}>
+                {option === "carousel" ? "4:5" : "1:1"}
+              </Link>
+            </Button>
+          ))}
+        </div>
+      </div>
 
-          return (
-            <li key={slide.id} className="rounded-lg border p-4">
-              <p className="text-muted-foreground text-xs">
-                Slide {slide.order + 1} · {slide.template.replaceAll("_", " ")}
-              </p>
-              <p className="mt-2 font-medium">{primary}</p>
-              {secondary && <p className="text-muted-foreground mt-1 text-sm">{secondary}</p>}
+      <div className="mt-10">
+        <SlideCarousel
+          previews={previews}
+          labels={slides.map((slide) => templates[slide.template].name)}
+          downloadUrls={slides.map(
+            (slide) => `/api/posts/${post.id}/slides/${slide.id}/png?format=${format}`,
+          )}
+        />
+      </div>
 
-              <details className="mt-3">
-                <summary className="text-muted-foreground cursor-pointer text-xs">
-                  Full slide data
-                </summary>
-                <pre className="bg-muted mt-2 overflow-x-auto rounded-md p-3 text-xs">
-                  {JSON.stringify(slide.content, null, 2)}
-                </pre>
-              </details>
-            </li>
-          );
-        })}
-      </ol>
+      <div className="mt-10 flex justify-center">
+        <Button asChild>
+          <a href={`/api/posts/${post.id}/export?format=${format}`} download>
+            Download all {slides.length} slides
+          </a>
+        </Button>
+      </div>
 
-      <p className="text-muted-foreground mt-8 text-sm">
-        Visual previews, editing and PNG export arrive with the renderer.
+      <p className="text-muted-foreground mt-10 text-center text-sm">
+        Editing and regeneration arrive next.
       </p>
     </main>
   );

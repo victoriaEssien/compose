@@ -75,17 +75,17 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 
 ## Phase 6: Renderer, templates, preview, export
 
-- [ ] Confirm renderer approach (see Decisions below) and document it in `AGENTS.md`
-- [ ] Template registry in `src/templates/`: id, name, Zod content schema, text limits, render function `(slide, brand, format) => JSX`
-- [ ] Templates (MVP needs 5 to 8): Cover, Text, Numbered List, Code, Comparison, Quote, Screenshot/Project, Final Slide (CTA)
-- [ ] Shared brand primitives: background, typography scale, avatar/username footer, slide counter, code block style
-- [ ] Font loading for the renderer (bundle TTF/OTF files for Brand Kit fonts)
-- [ ] Formats: carousel 1080 × 1350 and square 1080 × 1080
-- [ ] PNG render route: `GET /api/posts/[postId]/slides/[slideId]/png`
-- [ ] In-app preview using the same template code, scaled to fit
-- [ ] Slide carousel viewer on `/posts/[postId]` (spec section 22)
-- [ ] Export: download one slide, download all slides as a ZIP
-- [ ] Snapshot/visual tests for each template with fixture data
+- [x] Confirm renderer approach (see Decisions below) and document it in `AGENTS.md`
+- [x] Template registry in `src/templates/`: id, name, Zod content schema, text limits, render function `(slide, brand, format) => JSX`
+- [x] Templates (MVP needs 5 to 8): Cover, Text, Numbered List, Code, Comparison, Quote, Screenshot/Project, Final Slide (CTA)
+- [x] Shared brand primitives: background, typography scale, avatar/username footer, slide counter, code block style
+- [x] Font loading for the renderer (bundle TTF/OTF files for Brand Kit fonts)
+- [x] Formats: carousel 1080 × 1350 and square 1080 × 1080
+- [x] PNG render route: `GET /api/posts/[postId]/slides/[slideId]/png`
+- [x] In-app preview using the same template code, scaled to fit
+- [x] Slide carousel viewer on `/posts/[postId]` (spec section 22)
+- [x] Export: download one slide, download all slides as a ZIP
+- [x] Snapshot/visual tests for each template with fixture data
 
 ## Phase 7: Editor and regeneration
 
@@ -113,10 +113,10 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 
 ## Decisions to confirm
 
-- [ ] **Renderer.** Proposed: `next/og` (`ImageResponse`, built on Satori) with templates written as JSX + inline styles. No extra dependency, runs on Vercel. Limits: flexbox-only layout, subset of CSS, fonts must be loaded as TTF/OTF, code highlighting must be pre-tokenised. Alternative: headless Chromium screenshots (full CSS, heavier, harder on Vercel).
+- [x] **Renderer.** Decided: `next/og` (Satori), documented in `AGENTS.md`. Templates are flexbox JSX with inline styles, fonts ship as TTFs in `public/fonts/`.
 - [x] **Sign-in methods** for Better Auth. Decided: email and password only. No OAuth app to register and Better Auth keeps users in our own Postgres. GitHub or magic links can be added later without a migration.
 - [ ] **Image generation** model and where it's allowed (illustrations, backgrounds, avatars only; never text).
-- [ ] **Code highlighting** library for the Code template (e.g. Shiki, tokens rendered as spans).
+- [x] **Code highlighting.** Decided: Shiki, tokenised on the server and drawn as coloured spans.
 
 ## Backlog (post-MVP, do not start unless asked)
 

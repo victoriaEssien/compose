@@ -25,6 +25,30 @@ User content → AI (src/server/ai) → PostSpec JSON → Zod validation (src/ty
 - Templates are deterministic: same slide data + same Brand Kit = same image.
 - The in-app preview and the exported PNG use the same template code.
 
+## Renderer
+
+Slides are drawn by `next/og` (`ImageResponse`, built on Satori). Templates are JSX
+with inline styles, in `src/templates/`. The same element paints the in-app preview
+and the exported PNG, so they cannot drift.
+
+What Satori accepts, and what it does not:
+
+- Flexbox only. No grid, no float, no pseudo-elements. Every element with more than
+  one child needs an explicit `display: flex`.
+- Inline styles only. Tailwind classes never reach the renderer.
+- Raw `<img>`, never `next/image`. ESLint is turned off for that rule under
+  `src/templates/`.
+- Fonts have to be handed over as raw bytes, so only the families in
+  `fontFamilies` (`src/types/brand.ts`) can be used. Their TTFs live in
+  `public/fonts/`, which also lets the browser preview load the same files through
+  `@font-face`. Adding a family means adding its TTF there.
+- Syntax highlighting is pre-tokenised by Shiki on the server
+  (`src/server/render/highlight.ts`), because Satori cannot await anything.
+
+Formats are 1080x1350 (carousel) and 1080x1080 (square). Per-slide overrides in
+`designConfig` are merged over the Brand Kit by `slideTheme()`; templates read the
+resolved theme, never the Brand Kit directly.
+
 ## Layout
 
 ```text

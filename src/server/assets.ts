@@ -1,6 +1,6 @@
 /** Asset library reads and writes (spec section 16). */
 import "server-only";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 
 import type { AssetType } from "@/types/asset";
 import { db } from "./db/client";
@@ -36,4 +36,17 @@ export async function removeAsset(userId: string, id: string) {
     .returning();
 
   if (row) await deleteUserFile(row.url);
+}
+
+/** Slides store an assetId; the renderer needs the URL behind it. */
+export async function loadAssetUrls(userId: string, ids: string[]) {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return new Map<string, string>();
+
+  const rows = await db()
+    .select({ id: asset.id, url: asset.url })
+    .from(asset)
+    .where(and(eq(asset.userId, userId), inArray(asset.id, unique)));
+
+  return new Map(rows.map((row) => [row.id, row.url]));
 }
