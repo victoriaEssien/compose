@@ -6,6 +6,7 @@ import { generateCaption } from "@/server/ai/caption";
 import { generateIllustration } from "@/server/ai/illustration";
 import { regenerateSlide } from "@/server/ai/regenerate";
 import { AiError } from "@/server/ai/structured";
+import { createAsset } from "@/server/assets";
 import { requireUserId } from "@/server/auth";
 import { loadBrandKit } from "@/server/brand";
 import { loadPost, setPostStatus } from "@/server/posts";
@@ -296,8 +297,18 @@ export async function generateIllustrationAction(
   const upload = await uploadGeneratedImage(userId, image.bytes, image.contentType);
   if (!upload.ok) return { ok: false, error: upload.error };
 
+  // Into the library as well (spec section 16), so a good result can be reused
+  // on another slide instead of being paid for twice.
+  await createAsset({
+    userId,
+    name: `Illustration: ${hint}`.slice(0, 80),
+    type: "illustration",
+    url: upload.url,
+  });
+
   await setSlideIllustration(userId, postId, slideId, upload.url);
   revalidate(postId);
+  revalidatePath("/assets");
 
   return done;
 }

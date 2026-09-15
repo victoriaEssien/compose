@@ -143,10 +143,19 @@ The product has a renderer that draws beautiful images of anything, and uses it
 at zero decision points. This round is the single biggest lever on the
 specificity verdict.
 
+**Status: done.** `pnpm typecheck`, `pnpm lint`, `pnpm test` (228 passing) and
+`pnpm build` all green.
+
 ### 3.1 The dashboard is text rows
 
-- [ ] Give `PostCard` a 4:5 thumbnail from the first slide's PNG, cached (`post-card.tsx:15-23`). Spec section 21 draws `[Post] [Post] [Post]` as cards; this renders a title and a date
-- [ ] This is also the only way the user can check grid consistency, which is the product's core promise (spec section 5)
+- [x] Give `PostCard` a 4:5 thumbnail from the first slide's PNG, cached (`post-card.tsx:15-23`). Spec section 21 draws `[Post] [Post] [Post]` as cards; this renders a title and a date
+- [x] This is also the only way the user can check grid consistency, which is the product's core promise (spec section 5)
+
+The PNG route now distinguishes its two callers. `?download=1` is the Download
+link, which produces a file the user will publish and so must refuse a
+placeholder handle. Without it the route serves an in-app image with a short
+private cache, which is what the thumbnail uses. `listRecentPosts` and
+`listDrafts` return a `coverSlideId` alongside each row.
 
 ### 3.2 The editor hides the carousel
 
@@ -178,13 +187,36 @@ slide at up to 592px, where body copy renders around 17px instead of 9.5px.
 
 ### 3.4 Nine layouts chosen by name
 
-- [ ] Replace the template dropdown with a grid of miniature renders from `src/templates/fixtures.ts` (`post-editor.tsx:264-280`). Nine options is the largest decision point in the app and it is pure recall in a product built for people who cannot visualize layouts
+- [x] Replace the template dropdown with a grid of miniature renders from `src/templates/fixtures.ts` (`post-editor.tsx:264-280`). Nine options is the largest decision point in the app and it is pure recall in a product built for people who cannot visualize layouts
+
+New `GET /api/templates/[kind]/png` renders one fixture per template in the
+signed-in user's own Brand Kit, so the gallery shows what you would actually
+get. Serving it as images keeps all nine off the editor's render path: nothing
+is drawn until the picker is opened. The control is relabelled "Layout", which
+is what it is.
 
 ### 3.5 The visual hint is a guessing game
 
-- [ ] Replace the free-text "Visual hint" field with a picker showing the actual `resolveIcon` vocabulary (`post-editor.tsx:286-293`, `templates/icons.ts`). The placeholder is `database_icon`, an internal identifier, and the help text says to "try another word" without ever revealing which words work
-- [ ] Disclose that "Generate illustration" calls a paid image model and takes seconds, and stop styling it identically to "Duplicate" (`post-editor.tsx:294-303`). `AGENTS.md` states the rule; the UI does not pass it on
-- [ ] Add generated illustrations to the Asset library so a good result can be reused (`actions.ts:217-220`, spec section 16)
+- [x] Replace the free-text "Visual hint" field with a picker showing the actual `resolveIcon` vocabulary (`post-editor.tsx:286-293`, `templates/icons.ts`). The placeholder is `database_icon`, an internal identifier, and the help text says to "try another word" without ever revealing which words work
+- [x] Disclose that "Generate illustration" calls a paid image model and takes seconds, and stop styling it identically to "Duplicate" (`post-editor.tsx:294-303`). `AGENTS.md` states the rule; the UI does not pass it on
+- [x] Add generated illustrations to the Asset library so a good result can be reused (`actions.ts:217-220`, spec section 16)
+
+All 42 icons are shown as real SVGs drawn from the same `iconNodes` the renderer
+uses, so the picker cannot show a different mark from the slide. This costs no
+bundle weight: `post-editor` already imported `resolveIcon`, which pulls
+`icon-nodes` in regardless. The free-text field stays, retitled, because it is
+also the prompt for an illustration.
+
+Illustration generation moved into its own dashed panel that says plainly that
+an image model costs money and takes seconds, which `AGENTS.md` already stated
+as the rule while the UI kept it quiet. The panel only appears when no bundled
+icon matches, so the cheap path stays the obvious one.
+
+Generated illustrations are now Asset rows (spec section 16). That required
+`setSlideIllustration` to stop deleting the previous blob: the library owns the
+file now, and deleting it there would leave the library pointing at a dead URL.
+Removing the asset is what removes the blob.
+
 - [x] ~~Clean up orphaned blobs when an illustration is regenerated~~ **Not a defect.** The reviewer flagged this, but `setSlideIllustration` at `server/slides.ts:167` already calls `deleteUserFile` on the previous URL whenever it changes. Verified while implementing Round 1. No change needed
 
 ### 3.6 Export ends in silence

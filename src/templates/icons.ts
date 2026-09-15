@@ -103,6 +103,12 @@ const aliases: Record<string, IconName> = {
   bundle: "package",
 };
 
+/**
+ * The whole vocabulary, so the editor can show it instead of asking the user to
+ * guess at a dictionary they cannot see.
+ */
+export const iconNames = Object.keys(iconNodes) as IconName[];
+
 /** Null when nothing matches, which is a fine outcome: the slide just has no mark. */
 export function resolveIcon(hint: string | null): IconName | null {
   if (!hint) return null;

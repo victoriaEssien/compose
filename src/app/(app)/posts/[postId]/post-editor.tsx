@@ -38,7 +38,7 @@ import { cn } from "@/lib/utils";
 import type { AssetRow } from "@/server/db/schema";
 import { resolveIcon } from "@/templates/icons";
 import { templateNames } from "@/templates/names";
-import { regenerateActions, templateKinds } from "@/types/slide";
+import { regenerateActions } from "@/types/slide";
 import type { RegenerateAction, SlideDesignConfig, SlideSpec, TemplateKind } from "@/types/slide";
 import {
   changeTemplateAction,
@@ -54,9 +54,11 @@ import {
 } from "./actions";
 import { draftFor, draftSignature, serverSignature, shouldAutosave } from "./editor-state";
 import type { EditableSlide, SlideDraft } from "./editor-state";
+import { IconPicker } from "./icon-picker";
 import { SlideDesign } from "./slide-design";
 import { SlideFields } from "./slide-fields";
 import { SlideFilmstrip } from "./slide-filmstrip";
+import { TemplatePicker } from "./template-picker";
 
 export type { EditableSlide };
 
@@ -453,7 +455,10 @@ export function PostEditor({
             Delete
           </Button>
           <Button asChild variant="outline" size="sm">
-            <a href={`/api/posts/${postId}/slides/${slide.id}/png?format=${format}`} download>
+            <a
+              href={`/api/posts/${postId}/slides/${slide.id}/png?format=${format}&download=1`}
+              download
+            >
               Download
             </a>
           </Button>
@@ -485,62 +490,73 @@ export function PostEditor({
         )}
 
         <div className="grid gap-1.5">
-          <Label htmlFor="template">Template</Label>
-          <Select
+          <Label htmlFor="template">Layout</Label>
+          <TemplatePicker
             value={draft.template}
+            format={format}
             disabled={busy}
-            onValueChange={(value) => changeTemplate(value as TemplateKind)}
-          >
-            <SelectTrigger id="template" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {templateKinds.map((kind) => (
-                <SelectItem key={kind} value={kind}>
-                  {templateNames[kind]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onSelect={changeTemplate}
+          />
         </div>
 
         <SlideFields slide={draft} onChange={setDraft} />
 
-        <div className="grid gap-1.5">
-          <Label htmlFor="visual">Visual hint</Label>
-          <Input
-            id="visual"
-            value={draft.visual ?? ""}
-            placeholder="database_icon"
-            onChange={(event) => setDraft({ ...draft, visual: event.target.value || null })}
-          />
-          <p className="text-muted-foreground text-xs">{visualHelp}</p>
+        <div className="grid gap-2">
+          <Label htmlFor="visual">Visual</Label>
           <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={busy || !draft.visual}
-              onClick={() =>
-                run("illustration", () => generateIllustrationAction(postId, slide.id))
-              }
-            >
-              {running === "illustration" ? "Generating..." : "Generate illustration"}
-            </Button>
-            {slide.imageUrl && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={busy}
-                onClick={() =>
-                  run("unillustrate", () => removeIllustrationAction(postId, slide.id))
-                }
-              >
-                Remove illustration
-              </Button>
-            )}
+            <IconPicker
+              value={matchedIcon}
+              disabled={busy}
+              onSelect={(name) => setDraft({ ...draft, visual: name })}
+            />
+            <Input
+              id="visual"
+              className="min-w-40 flex-1"
+              value={draft.visual ?? ""}
+              placeholder="Or describe one: a hand-drawn query plan"
+              onChange={(event) => setDraft({ ...draft, visual: event.target.value || null })}
+            />
           </div>
+          <p className="text-muted-foreground text-xs">{visualHelp}</p>
+
+          {(!matchedIcon || slide.imageUrl) && (
+            <div className="mt-1 grid gap-2 rounded-lg border border-dashed p-3">
+              <p className="text-muted-foreground text-xs">
+                An illustration is drawn by an image model. It costs money and takes a few seconds,
+                so Compose never does it on its own.
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={busy || !draft.visual}
+                  onClick={() =>
+                    run("illustration", () => generateIllustrationAction(postId, slide.id))
+                  }
+                >
+                  {running === "illustration"
+                    ? "Generating..."
+                    : slide.imageUrl
+                      ? "Generate another"
+                      : "Generate an illustration"}
+                </Button>
+                {slide.imageUrl && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() =>
+                      run("unillustrate", () => removeIllustrationAction(postId, slide.id))
+                    }
+                  >
+                    Remove illustration
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {canTakeAsset && (

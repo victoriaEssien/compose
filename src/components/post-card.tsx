@@ -1,6 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 
-import type { PostRow } from "@/server/db/schema";
+import type { PostWithCover } from "@/server/posts";
 
 const statusLabels = {
   draft: "Draft",
@@ -10,16 +11,37 @@ const statusLabels = {
 
 const dateFormat = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" });
 
-export function PostCard({ post }: { post: PostRow }) {
+/**
+ * The cover slide, not just the title. Whether a grid of posts looks like one
+ * account is a visual judgment (spec section 5), and it cannot be made from a
+ * list of text rows.
+ */
+export function PostCard({ post }: { post: PostWithCover }) {
   return (
     <Link
       href={`/posts/${post.id}`}
-      className="hover:border-foreground/20 block rounded-lg border p-4 transition-colors"
+      className="hover:border-foreground/20 group block overflow-hidden rounded-lg border transition-colors"
     >
-      <p className="line-clamp-2 font-medium">{post.title}</p>
-      <p className="text-muted-foreground mt-2 text-xs">
-        {statusLabels[post.status]} · {dateFormat.format(post.updatedAt)}
-      </p>
+      {post.coverSlideId ? (
+        <div className="bg-muted relative aspect-[4/5]">
+          <Image
+            src={`/api/posts/${post.id}/slides/${post.coverSlideId}/png`}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover"
+          />
+        </div>
+      ) : (
+        <div className="bg-muted aspect-[4/5]" />
+      )}
+
+      <div className="p-4">
+        <p className="line-clamp-2 font-medium">{post.title}</p>
+        <p className="text-muted-foreground mt-2 text-xs">
+          {statusLabels[post.status]} · {dateFormat.format(post.updatedAt)}
+        </p>
+      </div>
     </Link>
   );
 }

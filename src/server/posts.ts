@@ -1,28 +1,55 @@
 /** Post reads and writes (spec sections 21 and 26). */
 import "server-only";
-import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
 
 import type { GeneratePostInput, PostSpec, PostStatus } from "@/types/post";
 import { db } from "./db/client";
 import { post, slide } from "./db/schema";
+import type { PostRow } from "./db/schema";
+
+/**
+ * The first slide of each post, so the dashboard can show a picture of the work
+ * instead of a row of titles. Order 0 is guaranteed: every write compacts.
+ */
+async function coverSlideIds(postIds: string[]) {
+  if (postIds.length === 0) return new Map<string, string>();
+
+  const rows = await db()
+    .select({ id: slide.id, postId: slide.postId })
+    .from(slide)
+    .where(and(inArray(slide.postId, postIds), eq(slide.order, 0)));
+
+  return new Map(rows.map((row) => [row.postId, row.id]));
+}
+
+async function withCovers(rows: PostRow[]): Promise<PostWithCover[]> {
+  const covers = await coverSlideIds(rows.map((row) => row.id));
+  return rows.map((row) => ({ ...row, coverSlideId: covers.get(row.id) ?? null }));
+}
+
+export type PostWithCover = PostRow & { coverSlideId: string | null };
 
 /** Everything past the draft stage, so the dashboard does not list a post twice. */
 export async function listRecentPosts(userId: string, limit = 6) {
-  return db()
+  const rows = await db()
     .select()
     .from(post)
     .where(and(eq(post.userId, userId), ne(post.status, "draft")))
     .orderBy(desc(post.updatedAt))
     .limit(limit);
+
+  return withCovers(rows);
 }
 
 export async function listDrafts(userId: string, limit = 6) {
-  return db()
+  const rows = await db()
     .select()
     .from(post)
     .where(and(eq(post.userId, userId), eq(post.status, "draft")))
     .orderBy(desc(post.updatedAt))
     .limit(limit);
+
+  return withCovers(rows);
 }
 
 /**
