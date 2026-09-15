@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 
+import { AssetPicker } from "@/components/asset-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import type { AssetRow } from "@/server/db/schema";
 import type { BrandKit } from "@/types/brand";
 import { cardStyles, codeBlockStyles, illustrationStyles } from "@/types/brand";
 import { saveBrandKitAction } from "./actions";
@@ -31,7 +33,45 @@ const colorFields = [
   { key: "muted", label: "Muted" },
 ] as const;
 
-export function BrandKitForm({ initial }: { initial: BrandKit }) {
+function AssetUrlField({
+  id,
+  label,
+  assets,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  assets: AssetRow[];
+  value: string | null;
+  onChange: (value: string | null) => void;
+}) {
+  return (
+    <div className="grid gap-2">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="flex items-center gap-2">
+        <Input
+          id={id}
+          type="url"
+          placeholder="https://"
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value || null)}
+        />
+        <AssetPicker
+          assets={assets}
+          onSelect={(asset) => onChange(asset.url)}
+          trigger={
+            <Button type="button" variant="outline">
+              Choose
+            </Button>
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
+export function BrandKitForm({ initial, assets }: { initial: BrandKit; assets: AssetRow[] }) {
   const [kit, setKit] = useState(initial);
   const [status, setStatus] = useState<{ saved: boolean; error: string | null }>({
     saved: false,
@@ -71,26 +111,20 @@ export function BrandKitForm({ initial }: { initial: BrandKit }) {
               required
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="logoUrl">Logo URL</Label>
-            <Input
-              id="logoUrl"
-              type="url"
-              placeholder="https://"
-              value={kit.logoUrl ?? ""}
-              onChange={(e) => set("logoUrl", e.target.value || null)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="avatarUrl">Avatar URL</Label>
-            <Input
-              id="avatarUrl"
-              type="url"
-              placeholder="https://"
-              value={kit.avatarUrl ?? ""}
-              onChange={(e) => set("avatarUrl", e.target.value || null)}
-            />
-          </div>
+          <AssetUrlField
+            id="logoUrl"
+            label="Logo"
+            assets={assets}
+            value={kit.logoUrl}
+            onChange={(value) => set("logoUrl", value)}
+          />
+          <AssetUrlField
+            id="avatarUrl"
+            label="Avatar"
+            assets={assets}
+            value={kit.avatarUrl}
+            onChange={(value) => set("avatarUrl", value)}
+          />
         </section>
 
         <section className="grid gap-4 sm:grid-cols-2">

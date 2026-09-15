@@ -1,10 +1,11 @@
+import { listAssets } from "@/server/assets";
 import { requireUserId } from "@/server/auth";
 import { loadBrandKit } from "@/server/brand";
 import { BrandKitForm } from "./brand-kit-form";
 
 export default async function Page() {
   const userId = await requireUserId();
-  const kit = await loadBrandKit(userId);
+  const [kit, assets] = await Promise.all([loadBrandKit(userId), listAssets(userId)]);
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
@@ -14,7 +15,7 @@ export default async function Page() {
       </p>
 
       <div className="mt-10">
-        <BrandKitForm initial={kit} />
+        <BrandKitForm initial={kit} assets={assets} />
       </div>
     </main>
   );

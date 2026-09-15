@@ -50,9 +50,9 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 - [x] Brand voice field (spec section 27)
 - [x] Seed a default Brand Kit on first sign-in (Better Auth `user.create.after` hook)
 - [x] Live brand preview using a sample slide. Stubbed with plain CSS until the Phase 6 renderer exists
-- [ ] Upload service (`src/server/storage/`) wrapping Vercel Blob: type and size limits, per-user paths
-- [ ] Assets page (spec section 16): upload, list, rename, delete
-- [ ] Asset picker component reusable in the editor
+- [x] Upload service (`src/server/storage/`) wrapping Vercel Blob: type and size limits, per-user paths
+- [x] Assets page (spec section 16): upload, list, rename, delete. Written but the upload path is unverified until the Blob store exists
+- [x] Asset picker component, used by the Brand Kit logo and avatar fields and reusable in the editor
 
 ## Phase 4: AI pipeline
 
