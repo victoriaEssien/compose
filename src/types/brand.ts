@@ -56,3 +56,20 @@ export type BrandKit = z.infer<typeof brandKitSchema>;
 export type CardStyle = z.infer<typeof cardStyleSchema>;
 export type IllustrationStyle = z.infer<typeof illustrationStyleSchema>;
 export type CodeBlockStyle = z.infer<typeof codeBlockStyleSchema>;
+
+/** Seeded for every new user, and the fallback the renderer uses until one is saved. */
+export const defaultBrandKit: BrandKit = {
+  name: "Your brand",
+  username: "@yourhandle",
+  logoUrl: null,
+  avatarUrl: null,
+  fonts: { primary: "Inter", secondary: "Inter" },
+  colors: { background: "#0B0B0F", text: "#F5F5F7", accent: "#6E56CF", muted: "#8A8A96" },
+  style: { radius: 16, card: "flat", illustration: "line", codeBlock: "dark" },
+  voice: null,
+};
+
+/** True while the seeded placeholder is untouched, so the UI can prompt for setup. */
+export function isDefaultBrandKit(kit: BrandKit) {
+  return kit.name === defaultBrandKit.name && kit.username === defaultBrandKit.username;
+}

@@ -7,6 +7,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { env } from "@/lib/env";
+import { seedBrandKit } from "./brand";
 import { db } from "./db/client";
 import * as schema from "./db/schema";
 
@@ -16,6 +17,9 @@ export const auth = betterAuth({
   secret: env().BETTER_AUTH_SECRET,
   database: drizzleAdapter(db(), { provider: "pg", schema }),
   emailAndPassword: { enabled: true, minPasswordLength: 8 },
+  databaseHooks: {
+    user: { create: { after: async (created) => seedBrandKit(created.id) } },
+  },
   // nextCookies() has to stay last so it can set cookies from server actions.
   plugins: [nextCookies()],
 });

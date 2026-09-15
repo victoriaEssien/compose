@@ -43,13 +43,13 @@ Product spec: [`docs/spec.md`](docs/spec.md). Conventions: [`AGENTS.md`](AGENTS.
 
 ## Phase 3: App shell, Dashboard, Brand Kit, Assets
 
-- [ ] App navigation in `(app)/layout.tsx`: Dashboard, Create Post, Brand Kit, Assets
-- [ ] Dashboard (spec section 21): Create Post button, Recent Posts, Drafts, Brand Kit link. No analytics
-- [ ] Empty states for no posts / no brand kit
-- [ ] Brand Kit form (spec section 10): name, username, logo, avatar, fonts, colors, radius, card style, illustration style, code block style
-- [ ] Brand voice field (spec section 27)
-- [ ] Seed a default Brand Kit on first sign-in
-- [ ] Live brand preview using a sample slide (depends on Phase 6 renderer; can stub first)
+- [x] App navigation in `(app)/layout.tsx`: Dashboard, Create Post, Brand Kit, Assets
+- [x] Dashboard (spec section 21): Create Post button, Recent Posts, Drafts, Brand Kit link. No analytics
+- [x] Empty states for no posts / no brand kit
+- [x] Brand Kit form (spec section 10): name, username, logo, avatar, fonts, colors, radius, card style, illustration style, code block style. Logo and avatar are URL fields until the asset picker lands
+- [x] Brand voice field (spec section 27)
+- [x] Seed a default Brand Kit on first sign-in (Better Auth `user.create.after` hook)
+- [x] Live brand preview using a sample slide. Stubbed with plain CSS until the Phase 6 renderer exists
 - [ ] Upload service (`src/server/storage/`) wrapping Vercel Blob: type and size limits, per-user paths
 - [ ] Assets page (spec section 16): upload, list, rename, delete
 - [ ] Asset picker component reusable in the editor
